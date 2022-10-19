@@ -207,14 +207,82 @@ cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
   mutate(firstyear_incumbent=year(firstyear_incumbent)) %>%
   select(-counter, -number, -maxcount)
 
-#Is government relevant for 2021?
+#Is the respective government relevant for 2020/2021?
 cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
-  mutate(included_2021=(ymd("2021-01-01") %within% incumbency_period))
+  mutate(included_2021=(ymd("2021-01-01") %within% incumbency_period),
+         included_2020=(ymd("2020-01-01") %within% incumbency_period))
 
+#Reshape and filter in order to get one row per nation/region for 2021 and one row for 2022.
+#For the later analysis, 2021 or 2020 needs to be selected.
 
-#mit wide reshapen, sodass national und regional nebeneinander aufgeführt werden.
+cabinet_nat_and_reg_21 <- cabinet_nat_and_reg %>%
+  filter(included_2021==TRUE) %>%
+  mutate(election_level=str_replace(election_level, " elections", "")) %>%
+  pivot_wider(names_from=election_level, values_from=c(election_date, election_id, start_date, cabinet_name, cabinet_id, previous_cabinet_id,
+                                                       caretaker, govparty1, govparty2, govparty3, govparty4, govparty5,
+                                                       govparty6, govparty7, prime_min_party, party_prime_min_english, party_prime_min_short,
+                                                       left_right_prime_min, firstyear_incumbent, incumbency_period)) %>%
+  group_by(country_name, country_id) %>%
+  fill(election_date_general,.direction="downup") %>%
+  fill(election_id_general,.direction="downup") %>%
+  fill(start_date_general,.direction="downup") %>%
+  fill(cabinet_name_general,.direction="downup") %>%
+  fill(cabinet_id_general,.direction="downup") %>%
+  fill(previous_cabinet_id_general,.direction="downup") %>%
+  fill(caretaker_general,.direction="downup") %>%
+  fill(govparty1_general,.direction="downup") %>%
+  fill(govparty2_general,.direction="downup") %>%
+  fill(govparty3_general,.direction="downup") %>%
+  fill(govparty4_general,.direction="downup") %>%
+  fill(govparty5_general,.direction="downup") %>%
+  fill(govparty6_general,.direction="downup") %>%
+  fill(govparty7_general,.direction="downup") %>%
+  fill(prime_min_party_general,.direction="downup") %>%
+  fill(party_prime_min_english_general,.direction="downup") %>%
+  fill(party_prime_min_short_general,.direction="downup") %>%
+  fill(left_right_prime_min_general,.direction="downup") %>%
+  fill(firstyear_incumbent_general,.direction="downup") %>% 
+  fill(incumbency_period_general,.direction="downup") %>%
+  ungroup() %>%
+  mutate(reference_year="2021") %>%
+  select(-included_2020, -included_2021)
+
+cabinet_nat_and_reg_20 <- cabinet_nat_and_reg %>%
+  filter(included_2020==TRUE) %>%
+  mutate(election_level=str_replace(election_level, " elections", "")) %>%
+  pivot_wider(names_from=election_level, values_from=c(election_date, election_id, start_date, cabinet_name, cabinet_id, previous_cabinet_id,
+                                                       caretaker, govparty1, govparty2, govparty3, govparty4, govparty5,
+                                                       govparty6, govparty7, prime_min_party, party_prime_min_english, party_prime_min_short,
+                                                       left_right_prime_min, firstyear_incumbent, incumbency_period)) %>%
+  group_by(country_name, country_id) %>%
+  fill(election_date_general,.direction="downup") %>%
+  fill(election_id_general,.direction="downup") %>%
+  fill(start_date_general,.direction="downup") %>%
+  fill(cabinet_name_general,.direction="downup") %>%
+  fill(cabinet_id_general,.direction="downup") %>%
+  fill(previous_cabinet_id_general,.direction="downup") %>%
+  fill(caretaker_general,.direction="downup") %>%
+  fill(govparty1_general,.direction="downup") %>%
+  fill(govparty2_general,.direction="downup") %>%
+  fill(govparty3_general,.direction="downup") %>%
+  fill(govparty4_general,.direction="downup") %>%
+  fill(govparty5_general,.direction="downup") %>%
+  fill(govparty6_general,.direction="downup") %>%
+  fill(govparty7_general,.direction="downup") %>%
+  fill(prime_min_party_general,.direction="downup") %>%
+  fill(party_prime_min_english_general,.direction="downup") %>%
+  fill(party_prime_min_short_general,.direction="downup") %>%
+  fill(left_right_prime_min_general,.direction="downup") %>%
+  fill(firstyear_incumbent_general,.direction="downup") %>% 
+  fill(incumbency_period_general,.direction="downup") %>%
+  ungroup() %>%
+  mutate(reference_year="2020") %>%
+  select(-included_2020, -included_2021)
+
+cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_20 %>%
+  bind_rows(cabinet_nat_and_reg_21)
+
 #alignment erstellen.
 
+write_csv(regional_gov, file.path("./data/processed/","reg_and_nat_governments_2122.csv"))
 
-
-write_csv(regional_gov, file.path("./data/processed/","reg_and_nat_governments.csv"))
