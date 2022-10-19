@@ -202,7 +202,7 @@ cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
   mutate(maxcount=max(counter)) %>%
   mutate(incumbency_period=case_when(firstyear_incumbent==0~interval(ymd("1900-01-01"), ymd("1900-12-31")),
                                    firstyear_incumbent>0 & counter<maxcount ~ interval(firstyear_incumbent, ((lead(firstyear_incumbent))-1)),
-                                   firstyear_incumbent>0 & counter==maxcount  ~ (interval(firstyear_incumbent, ymd("2023-01-01"))),
+                                   firstyear_incumbent>0 & counter==maxcount  ~ (interval(firstyear_incumbent, ymd("2023-12-31"))),
                                    TRUE~interval(ymd("1900-01-01"), ymd("1900-12-31")))) %>%
   mutate(firstyear_incumbent=year(firstyear_incumbent)) %>%
   select(-counter, -number, -maxcount)
@@ -281,8 +281,6 @@ cabinet_nat_and_reg_20 <- cabinet_nat_and_reg %>%
 
 cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_20 %>%
   bind_rows(cabinet_nat_and_reg_21)
-
-#alignment erstellen.
 
 write_csv(regional_gov, file.path("./data/processed/","reg_and_nat_governments_2122.csv"))
 
