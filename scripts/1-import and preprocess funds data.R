@@ -974,8 +974,552 @@ denmark_esf <- denmark_esf %>%
 
 funds <- funds %>% 
   bind_rows(denmark_esf)
+#Finland####
+#import as xlsx file as xls and csv are not possible (csv because commas wihtin one cell and xls due to technical issues).
+##bei Aland OP noch TO 13...voller Name in (filter()) ergänzen. Aktuell noch 0 Vorhaben.
+finland_efrd1 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Etelä-Karjala_EFRE.xlsx")
+finland_efrd2 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Etelä-Pohjanmaa_EFRE.xlsx")
+finland_efrd3 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Etelä-Savo_EFRE.xlsx")
+finland_efrd4 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Kainuu_EFRE.xlsx")
+finland_efrd5 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Kanta-Haeme.xlsx")
+finland_efrd6 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Keski-Pohjanmaa_EFRE.xlsx")
+finland_efrd7 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Keski-Suomi_EFRE.xlsx")
+finland_efrd8 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Kymenlaakso_EFRE.xlsx")
+finland_efrd9 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Lappi_EFRE.xlsx")
+finland_efrd10 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/nationwide_EFRE.xlsx")
+finland_efrd11 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Päijät-Häme_EFRE.xlsx")
+finland_efrd12 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Pirkanmaa_EFRE.xlsx")
+finland_efrd13 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Pohjanmaa_EFRE.xlsx")
+finland_efrd14 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Pohjois-Karjala_EFRE.xlsx")
+finland_efrd15 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Pohjois-Savo_EFRE.xlsx")
+finland_efrd16 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Satakunta_EFRE.xlsx")
+finland_efrd17 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Uusimaa_EFRE.xlsx")
+finland_efrd18 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Varsinais-Suomi_EFRE.xlsx")
+finland_efrd19 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/EFRE/Pohjois-Pohjanmaa_EFRE.xlsx")
 
-#4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).
 
-  
+finland_efrd1 <- finland_efrd1 %>% 
+  mutate(nuts_2="FI1C")
+finland_efrd2 <- finland_efrd2 %>% 
+  mutate(nuts_2="FI19")
+finland_efrd3 <- finland_efrd3 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd4 <- finland_efrd4 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd5 <- finland_efrd5 %>% 
+  mutate(nuts_2="FI1C")
+finland_efrd6 <- finland_efrd6 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd7 <- finland_efrd7 %>% 
+  mutate(nuts_2="FI19")
+finland_efrd8 <- finland_efrd8 %>% 
+  mutate(nuts_2="FI1C")
+finland_efrd9 <- finland_efrd9 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd10 <- finland_efrd10 %>% 
+  mutate(nuts_2="higher NUTS",
+         'Toteutunut EU- ja valtion rahoitus'=as.character('Toteutunut EU- ja valtion rahoitus'),
+         'Toteutunut julkinen rahoitus yhteensä'=as.character('Toteutunut julkinen rahoitus yhteensä'))
+finland_efrd11 <- finland_efrd11 %>% 
+  mutate(nuts_2="FI1C")
+finland_efrd12 <- finland_efrd12 %>% 
+  mutate(nuts_2="FI19")
+finland_efrd13 <- finland_efrd13 %>% 
+  mutate(nuts_2="FI19")
+finland_efrd14 <- finland_efrd14 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd15 <- finland_efrd15 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd16 <- finland_efrd16 %>% 
+  mutate(nuts_2="FI19")
+finland_efrd17 <- finland_efrd17 %>% 
+  mutate(nuts_2="FI1B")
+finland_efrd18 <- finland_efrd18 %>% 
+  mutate(nuts_2="FI1C")
+finland_efrd19 <- finland_efrd18 %>% 
+  mutate(nuts_2="FI1D")
+
+finland_efrd <- finland_efrd1 %>% 
+  bind_rows(finland_efrd2, finland_efrd3, finland_efrd4, finland_efrd5, finland_efrd6, finland_efrd7, finland_efrd8, finland_efrd9, finland_efrd10,
+            finland_efrd11, finland_efrd12, finland_efrd13, finland_efrd14, finland_efrd15, finland_efrd16, finland_efrd17, finland_efrd18, finland_efrd19)
+
+finland_efrd <- finland_efrd %>%
+  select(-Koodi, -Viranomainen, -Tila, -`Toteutunut EU- ja valtion rahoitus`, -`Toteutunut julkinen rahoitus yhteensä`)
+
+colnames(finland_efrd) <- c("fund", "operation_name", "priority_axis",  "start_date", "end_date", "beneficiary", "total_EU_expenditure", "total_budget","nuts_2")
+
+finland_efrd <- finland_efrd %>% 
+  mutate(country_name="finland",
+         country_id=67,
+         fund="efrd",
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, " ", ""),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         total_budget=str_replace_all(total_budget, " ", ""),
+         total_budget=as.numeric(total_budget),
+         eu_cofinancing_rate=total_EU_expenditure/total_budget,
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         priority_axis=as.character(priority_axis)) %>% 
+  select(-total_budget)
+
+funds <- funds %>% 
+  bind_rows(finland_efrd)
+
+
+finland_esf1 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Etelä-Karjala_ESF.xlsx")
+finland_esf2 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Etelä-Pohjanmaa_ESF.xlsx")
+finland_esf3 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Etelä-Savo_ESF.xlsx")
+finland_esf4 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Kainuu_ESF.xlsx")
+finland_esf5 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Kanta-Häme_ESF.xlsx")
+finland_esf6 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Keski-Pohjanmaa_ESF.xlsx")
+finland_esf7 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Keski-Suomi_ESF.xlsx")
+finland_esf8 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Kymenlaakso_ESF.xlsx")
+finland_esf9 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Lappi_ESF.xlsx")
+finland_esf10 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Pohjois-Pohjanmaa_ESF.xlsx")
+finland_esf11 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Päijät-Häme_ESF.xlsx")
+finland_esf12 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Pirkanmaa_ESF.xlsx")
+finland_esf13 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Pohjanmaa_ESF.xlsx")
+finland_esf14 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Pohjois-Karjala_ESF.xlsx")
+finland_esf15 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Pohjois-Savo_ESF.xlsx")
+finland_esf16 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Satakunta_ESF.xlsx")
+finland_esf17 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Uusimaa_ESF.xlsx")
+finland_esf18 <- read_xlsx("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/nach Region gefiltert/ESF/Varsinais-Suomi_ESF.xlsx")
+
+
+finland_esf1 <- finland_esf1 %>% 
+  mutate(nuts_2="FI1C")
+finland_esf2 <- finland_esf2 %>% 
+  mutate(nuts_2="FI19")
+finland_esf3 <- finland_esf3 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf4 <- finland_esf4 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf5 <- finland_esf5 %>% 
+  mutate(nuts_2="FI1C")
+finland_esf6 <- finland_esf6 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf7 <- finland_esf7 %>% 
+  mutate(nuts_2="FI19")
+finland_esf8 <- finland_esf8 %>% 
+  mutate(nuts_2="FI1C")
+finland_esf9 <- finland_esf9 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf10 <- finland_esf10 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf11 <- finland_esf11 %>% 
+  mutate(nuts_2="FI1C")
+finland_esf12 <- finland_esf12 %>% 
+  mutate(nuts_2="FI19")
+finland_esf13 <- finland_esf13 %>% 
+  mutate(nuts_2="FI19")
+finland_esf14 <- finland_esf14 %>% 
+  mutate(nuts_2="FI1D")
+finland_esf15 <- finland_esf15 %>% 
+  mutate(nuts_2="FI1D")
+finland_efrd16 <- finland_esf16 %>% 
+  mutate(nuts_2="FI19")
+finland_esf17 <- finland_esf17 %>% 
+  mutate(nuts_2="FI1B")
+finland_esf18 <- finland_esf18 %>% 
+  mutate(nuts_2="FI1C")
+
+finland_esf <- finland_esf1 %>% 
+  bind_rows(finland_esf2, finland_esf3, finland_esf4, finland_esf5, finland_esf6, finland_esf7, finland_esf8, finland_esf9, finland_esf10,
+            finland_esf11, finland_esf12, finland_esf13, finland_esf14, finland_esf15, finland_esf16, finland_esf17, finland_esf18)
+
+finland_esf <- finland_esf %>%
+  select(-Koodi, -Viranomainen, -Tila, -`Toteutunut EU- ja valtion rahoitus`, -`Toteutunut julkinen rahoitus yhteensä`)
+
+colnames(finland_esf) <- c("fund", "operation_name", "priority_axis",  "start_date", "end_date", "beneficiary", "total_EU_expenditure", "total_budget","nuts_2")
+
+finland_esf <- finland_esf %>% 
+  mutate(country_name="finland",
+         country_id=67,
+         fund="esf",
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, " ", ""),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         total_budget=str_replace_all(total_budget, " ", ""),
+         total_budget=as.numeric(total_budget),
+         eu_cofinancing_rate=total_EU_expenditure/total_budget,
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         priority_axis=as.character(priority_axis)) %>% 
+  select(-total_budget)
+
+funds <- funds %>% 
+  bind_rows(finland_esf)
+
+finland_aland <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/finland/fi_2021-Åland.csv"))
+finland_aland <- finland_aland %>% 
+  select(-`Diarienummer / registration number`,-`Postnummer / Operation postcode`,-`Land / Country`)
+
+colnames(finland_aland) <- c("beneficiary", "operation_name", "start_date", "end_date", "eu_cofinancing_rate", "total", "operation_summary", "category_of_intervention", "thematic_objective")
+
+finland_aland <- finland_aland %>%
+  filter(beneficiary!="") %>% 
+  filter(thematic_objective=="13...") %>% 
+  mutate(country_name="finland",
+         country_id=67,
+         fund="esf/efrd",
+         eu_cofinancing_rate=str_replace(eu_cofinancing_rate, "[:punct:]", ""),
+         eu_cofinancing_rate=as.numeric(eu_cofinancing_rate)/100,
+         total=str_replace(total,"€", ""),
+         total=str_replace_all(total," ", ""),
+         total=str_replace_all(total,",", "."),
+         total=as.numeric(total),
+         total_EU_expenditure=eu_cofinancing_rate*total,
+         start_date=dmy(start_date),
+         end_date=dmy(end_date)) %>% 
+  select(-thematic_objective, -total)
+
+
+funds <- funds %>% 
+  bind_rows(finland_aland)
+
+#France####
+##checken: noch weitere administrative regions bzw. bei volet nation weitere location_indicator dazugekommen?
+##OP Mayotte: ergänzen Achsenname Achse 16 (über code codification filterbar), aktuell noch 0 Vorhaben.
+##weitere administrative units für outre mer regions hinzugekommen? Nur nationale herausfiltern (siehe notes Dokument)
+#in France, nuts1 level is used as equivalent to nuts_2 levels in other countries.
+france_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/france/FR-2022-09-national-ESF.xlsx")
+france_esf <- france_esf %>% 
+  filter(`libellé du PO`=="Programme Opérationnel National FSE") %>% 
+  select(-`numéro d'opération`, -`libellé du PO`,-`service gestionnaire`,-`code codification`, -`Coût total retenu sur l'opération`, -`Taux d'intervention FSE réalisé sur l'ensemble de l'opération`)
+
+colnames(france_esf) <- c("administrative_region", "beneficiary","operation_name","operation_summary", "start_date", "end_date", "total", "priority_axis",
+                          "eu_cofinancing_rate", "location_indicator", "category_of_intervention")
+
+france_esf <- france_esf %>% 
+  filter(priority_axis=="Mise en œuvre des crédits REACT") %>% 
+  mutate(eu_cofinancing_rate=eu_cofinancing_rate/100,
+         total_EU_expenditure=total*eu_cofinancing_rate,
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         country_name="france",
+         country_id=43,
+         fund="esf") %>% 
+  select(-total)
+
+table(france_esf$administrative_region)
+france_esf <- france_esf %>% 
+  mutate(nuts_2=case_when(administrative_region=="Aquitaine"~"FRI",
+                          administrative_region=="Auvergne"~"FRK",
+                          administrative_region=="Bourgogne"~"FRC",
+                          administrative_region=="Bretagne"~"FRH",
+                          administrative_region=="Centre"~"FRB",
+                          administrative_region=="Champagne-Ardenne"~"FR2",
+                          administrative_region=="Franche-Comté"~"FRC",
+                          administrative_region=="Ile-de-France"~"FR1",
+                          administrative_region=="Limousin"~"FRI",
+                          administrative_region=="Lorraine"~"FRF",
+                          administrative_region=="Poitou-Charentes"~"FRI",
+                          administrative_region=="Provence-Alpes-Côte d'Azur"~"FRL",
+                          administrative_region=="Rhône-Alpes"~"FRK",
+                          TRUE~"multiple NUTS")) %>% 
+  mutate(nuts_2=case_when(nuts_2=="multiple NUTS" & location_indicator=="13 départements de l’Occitanie : Ariège (09), Aude (11) Aveyron (12), Gard (30), Haute Garonne (31), Gers (32), Hérault (34), Lot (46), Lozère (48), Hautes Pyrénées (65),  Pyrénées Orientales (66), Tarn (81), Tarn et Garonne (82)"~"FRJ",
+                          nuts_2=="multiple NUTS" & location_indicator=="Auvergne Rhône-Alpes"~"FRK",
+                          nuts_2=="multiple NUTS" & location_indicator=="BFC"~"FRC",
+                          nuts_2=="multiple NUTS" & location_indicator=="Communes de la Région Martinique"~"FRY2",
+                          nuts_2=="multiple NUTS" & location_indicator=="DEPARTEMENTS CALVADOS &#8211; MANCHE &#8211; ORNE &#8211; EURE - SEINE MARITIME"~"FRD",
+                          nuts_2=="multiple NUTS" & location_indicator=="Départements des Côtes-d'Armor, du Finistère, d'Ille & Vilaine et du Morbihan"~"FRH",
+                          nuts_2=="multiple NUTS" & location_indicator=="Ensemble des départements de la Région Corse"~"FRM",
+                          nuts_2=="multiple NUTS" & location_indicator=="Guadeloupe & Saint-Martin"~"FRY1",
+                          nuts_2=="multiple NUTS" & location_indicator=="Guadeloupe ET Saint-Martin"~"FRY1",
+                          nuts_2=="multiple NUTS" & location_indicator=="GUYANE"~"FRY3",
+                          nuts_2=="multiple NUTS" & location_indicator=="Hauts-de-France"~"FRE",
+                          nuts_2=="multiple NUTS" & location_indicator=="Ile de France"~"FR1",
+                          nuts_2=="multiple NUTS" & location_indicator=="Ile-de-France"~"FR1",
+                          nuts_2=="multiple NUTS" & location_indicator=="L’ensemble des départements constituant la région Nouvelle Aquitaine."~"FRI",
+                          nuts_2=="multiple NUTS" & location_indicator=="La région Bretagne"~"FRH",
+                          nuts_2=="multiple NUTS" & location_indicator=="Le projet est réalisé sur les 13 départements de la Région Occitanie : ARIEGE 09,AUDE 11,AVEYRON 12,GARD 30,HAUTE GARONNE 31,GERS 32,LOT 46, LOZERE 48,HAUTES PYRENEES 65,PYRENEES ORIENTALES 66,TARN 81,TARN&GARONNE 82, HERAULT 34"~"FRJ",
+                          nuts_2=="multiple NUTS" & location_indicator=="L'ensemble de la région Corse"~"FRM",
+                          nuts_2=="multiple NUTS" & location_indicator=="L'ensemble des 10 départements de la région Grand Est (Ardennes, Aube, Marne, Haute-Marne, Meurthe et Moselle, Meuse, Moselle, Vosges, Bas-Rhin et Haut-Rhin)"~"FRF",
+                          nuts_2=="multiple NUTS" & location_indicator=="Les cinq départements normands : Calvados- Eure-Manche-Orne-Seine Maritime"~"FRD",
+                          nuts_2=="multiple NUTS" & location_indicator=="MARTINIQUE"~"FRY2",
+                          nuts_2=="multiple NUTS" & location_indicator=="MAYOTTE"~"FRY5",
+                          nuts_2=="multiple NUTS" & location_indicator=="Normandie"~"FRD",
+                          nuts_2=="multiple NUTS" & location_indicator=="NOUVELLE-AQUITAINE"~"FRI",
+                          nuts_2=="multiple NUTS" & location_indicator=="Nouvelle-Aquitaine"~"FRI",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région"~"FRM",
+                          nuts_2=="multiple NUTS" & location_indicator=="REGION AUVERGNE RHONE-ALPES"~"FRK",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Auvergne-Rhône-Alpes"~"FRK",
+                          nuts_2=="multiple NUTS" & location_indicator=="REGION BOURGOGNE FRANCHE COMTE"~"FRC",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Centre-Val de Loire"~"FRB",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Centre-Val de Loire : départements du Cher, de l'Eure-et-Loir, de l'Indre, de l'Indre-et-Loire, du Loir-et-Cher et du Loiret."~"FRB",
+                          nuts_2=="multiple NUTS" & location_indicator=="REGION GRAND EST"~"FRF",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Grand Est dans sa globalité (Départements Ardennes, Marne, Haute-Marne, Aube, Meurthe et Moselle, Moselle, Meuse, Vosges, Bas-Rhin et Haut-Rhin)"~"FRF",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Hauts-de-France"~"FRE",
+                          nuts_2=="multiple NUTS" & location_indicator=="REGION OCCITANIE"~"FRJ",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région PACA"~"FRL",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Pays de la Loire"~"FRG",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Pays de la Loire : départements de Loire atlantique, Maine et Loire, Mayenne, Sarthe et Vendée."~"FRG",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Provence Alpes Côte d Azur"~"FRL",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Provence-Alpes-Côte d'Azur"~"FRL",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région REUNION"~"FRY4",
+                          nuts_2=="multiple NUTS" & location_indicator=="Région Réunion"~"FRY4",
+                          TRUE~nuts_2)) %>% 
+  select(-administrative_region)
+
+funds <- funds %>% 
+  bind_rows(france_esf)
+
+
+france_esf1 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/france/FR-2022-09-national-ESF.xlsx")
+france_esf1 <- france_esf1 %>% 
+  filter(`libellé du PO`=="PO Mayotte" |`libellé du PO`=="PO réunion" |`libellé du PO`=="PO Guadeloupe" |`libellé du PO`=="PO Guyane" |`libellé du PO`=="PO Martinique") %>% 
+  select(-`numéro d'opération`, -`libellé du PO`,-`code codification`, -`Coût total retenu sur l'opération`, -`Taux d'intervention FSE réalisé sur l'ensemble de l'opération`)
+
+colnames(france_esf1) <- c("administrative_region", "administering_unit", "beneficiary","operation_name","operation_summary", "start_date", "end_date", "total", "priority_axis",
+                          "eu_cofinancing_rate", "location_indicator", "category_of_intervention")
+
+
+france_esf1 <- france_esf1 %>% 
+  filter(priority_axis=="Favoriser la réparation des dommages à la suite de la crise engendrée par la pandémie de COVID-19 et préparer une reprise écologique, numérique et résiliente de l’économie" | 
+           priority_axis=="Réparer les dommages à la suite de la crise engendrée par la pandémie de COVID-19 et préparer une reprise écologique, numérique et résiliente de l’économie (REACT EU)" |
+           priority_axis=="REACT-EU" |
+           priority_axis=="RESSOURCES SUPPLÉMENTAIRES DE REACT-EU POUR FACILITER LA REPRISE")
+
+table(france_esf1$administering_unit)
+
+france_esf1 <- france_esf1 %>%  
+  filter(administering_unit!="REGION REUNION - OI") %>% 
+  mutate(eu_cofinancing_rate=eu_cofinancing_rate/100,
+         total_EU_expenditure=total*eu_cofinancing_rate,
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         country_name="france",
+         country_id=43,
+         fund="esf") %>% 
+  mutate(nuts_2=case_when(administrative_region=="Guadeloupe"~"FRY1",
+                            administrative_region=="Guyane"~"FRY3",
+                            administrative_region=="Martinique"~"FRY2",
+                            administrative_region=="Réunion"~"FRY4",
+                            administrative_region=="Mayotte"~"FRY5",
+                            TRUE~"multiple NUTS")) %>% 
+  select(-total, -administrative_region, -administering_unit)
+
+funds <- funds %>% 
+  bind_rows(france_esf1)
+
+#Germany####
+germany_esf <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/germany/DE_2022-10-19_Bund_ESF.csv"))
+
+germany_esf <- germany_esf %>% 
+  select(-Land, -Finanzierungsform, -`Art des Gebietes`, -Postleitzahl, -Bundesland, -`Territoriale Umsetzungsmechanismen`, -`Sekundäres ESF-Thema`, -`Thematisches Ziel`, -Wirtschaftstätigkeit, -Aktualisierungsdatum)
+
+colnames(germany_esf) <- c("operation_name", "beneficiary",  "operation_summary", "start_date", "end_date", "total", "eu_cofinancing_rate",
+                           "priority_axis", "category_of_intervention", "location_indicator")
+
+germany_esf <- germany_esf %>% 
+  filter(priority_axis=="Prioritätsachse E: Unterstützung der Krisenbewältigung im Zusammenhang mit der COVID-19-Pandemie") %>% 
+  mutate(country_name="germany",
+         country_id=54,
+         fund="esf",
+         eu_cofinancing_rate=str_replace_all(eu_cofinancing_rate, ",", "."),        
+         eu_cofinancing_rate=(as.numeric(eu_cofinancing_rate))/100,
+         total=str_replace_all(total, "\\.",""),
+         start_date=dmy(start_date),
+         end_date=dmy(end_date)) %>% 
+  mutate(total=str_replace_all(total, ",", ".")) %>% 
+  mutate(total=as.numeric(total)) %>% 
+  mutate(total_EU_expenditure=total*eu_cofinancing_rate,
+         nuts_2=str_extract(location_indicator, "DE[:alnum:]{2}")) %>% 
+  select(-total)
+
+funds <- funds %>% 
+  bind_rows(germany_esf)
+
+#Greece####
+##checken, ob bei ESF noch regionale Projekte dazugekommen sind - dann entsprechend Listen von Website herunterladen.
+greece_efrd1 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_attiki-2022-10-19-EFRD.xlsx")
+greece_efrd2 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece-anatoliki makedonia, thraki_2022-10-19-EFRD.xlsx")
+greece_efrd3 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_dytiki ellada-2022-10-19-EFRD.xlsx")
+greece_efrd4 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_dytiki makedonia-2022-10-19-EFRD.xlsx")
+greece_efrd5 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_ionia nissia-2022-10-19-EFRD.xlsx")
+greece_efrd6 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_ipeiros-2022-10-19-EFRD.xlsx")
+greece_efrd7 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_kentriki makedonia-2022-10-19-EFRD.xlsx")
+greece_efrd8 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_kriti-2022-10-19-EFRD.xlsx")
+greece_efrd9 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_notio aigaio-2022-10-19-EFRD.xlsx")
+greece_efrd10 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_peloponnisos-2022-10-19-EFRD.xlsx")
+greece_efrd11 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_sterea ellada-2022-10-19-EFRD.xlsx")
+greece_efrd12 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_voreio aigaio-2022-10-19-EFRD.xlsx")
+greece_efrd13 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_thessalia-2022-10-19-EFRD.xlsx")
+greece_efrd14 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_multiregional-2022-10-19-EFRD.xlsx")
+
+
+greece_efrd1 <- greece_efrd1 %>% 
+  mutate(nuts_2="EL30")
+greece_efrd2 <- greece_efrd2 %>% 
+  mutate(nuts_2="EL51")
+greece_efrd3 <- greece_efrd3 %>% 
+  mutate(nuts_2="EL63")
+greece_efrd4 <- greece_efrd4 %>% 
+  mutate(nuts_2="EL53")
+greece_efrd5 <- greece_efrd5 %>% 
+  mutate(nuts_2="EL62")
+greece_efrd6 <- greece_efrd6 %>% 
+  mutate(nuts_2="EL54")
+greece_efrd7 <- greece_efrd7 %>% 
+  mutate(nuts_2="EL52")
+greece_efrd8 <- greece_efrd8 %>% 
+  mutate(nuts_2="EL43")
+greece_efrd9 <- greece_efrd9 %>% 
+  mutate(nuts_2="EL42")
+greece_efrd10 <- greece_efrd10 %>% 
+  mutate(nuts_2="EL65")
+greece_efrd11 <- greece_efrd11 %>% 
+  mutate(nuts_2="EL64")
+greece_efrd12 <- greece_efrd12 %>% 
+  mutate(nuts_2="EL41")
+greece_efrd13 <- greece_efrd13 %>% 
+  mutate(nuts_2="EL61")
+greece_efrd14 <- greece_efrd14 %>% 
+  mutate(nuts_2="higher NUTS")
+
+greece_efrd <- greece_efrd1 %>% 
+  bind_rows(greece_efrd2, greece_efrd3, greece_efrd4, greece_efrd5, greece_efrd6, greece_efrd7, greece_efrd8, greece_efrd9, greece_efrd10,
+            greece_efrd11, greece_efrd12, greece_efrd13, greece_efrd14)
+
+greece_efrd <- greece_efrd %>%
+  select(-`MIS code`,-`Call code`,-`Call title`,-`Spatial development`, -Horizontal, -`Major project`,-`State aid`,-`Has expropriation`, -`Funding Instruments` , -Contracts, -Payments)
+
+colnames(greece_efrd) <- c("operation_name", "beneficiary", "start_date", "end_date", "operational_programme", "fund", "thematic_objective",
+"total_budget", "total_EU_expenditure", "nuts_2")
+
+greece_efrd <- greece_efrd %>% 
+  filter(thematic_objective=="React EU") %>% 
+  mutate(country_name="greece",
+         country_id=41,
+         fund="efrd",
+         eu_cofinancing_rate=total_EU_expenditure/total_budget,
+         start_date=dmy(start_date),
+         end_date=dmy(end_date)) %>% 
+  select(-total_budget, -operational_programme, -thematic_objective)
+
+funds <- funds %>% 
+  bind_rows(greece_efrd)
+
+greece_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/greece/greece_2022-10-19-ESF-REACT.xlsx")
+
+greece_esf <- greece_esf %>%
+  select(-`MIS code`,-`Call code`,-`Call title`,-`Spatial development`, -Horizontal, -`Major project`,-`State aid`,-`Has expropriation`, -`Funding Instruments` , -Contracts, -Payments)
+
+colnames(greece_esf) <- c("operation_name", "beneficiary", "start_date", "end_date", "operational_programme", "fund", "thematic_objective",
+                           "total_budget", "total_EU_expenditure")
+
+greece_esf <- greece_esf %>% 
+  filter(!is.na(beneficiary)) %>% 
+  mutate(country_name="greece",
+         country_id=41,
+         fund="esf",
+         eu_cofinancing_rate=total_EU_expenditure/total_budget,
+         start_date=dmy(start_date),
+         end_date=dmy(end_date),
+         nuts_2="higher NUTS") %>% 
+  select(-total_budget, -operational_programme, -thematic_objective)
+
+funds <- funds %>% 
+  bind_rows(greece_esf)
+
+
+#Hungary####
+#Ireland####
+##noch weitere Begünstige hinzugekommen? Ggf. location_indicator und Daten ändern.
+ireland_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/ireland_2021-12-03-ESF.xlsx", skip=4)
+
+ireland_esf <- ireland_esf %>% 
+  select(-`Total YEI Allocated`, -`Total Eligible Expenditure Allocated`, -`Total Public Funding Allocated`, -Postcode, -Website)
+
+colnames(ireland_esf) <- c("operation_name", "beneficiary", "operation_summary", "start_date", "end_date", "total_EU_expenditure","eu_cofinancing_rate",
+                           "location_indicator","category_of_intervention")
+
+ireland_esf <- ireland_esf %>% 
+  filter(str_detect(operation_name, "REACT-EU")) %>% 
+  mutate(country_name="ireland",
+         country_id=37,
+         fund="esf",
+         nuts_2="higher NUTS") %>% 
+  select(-location_indicator, -start_date, -end_date)
+
+funds <- funds %>% 
+  bind_rows(ireland_esf)
+
+
+#Italy####
+##weitere Begünstigte in Trentino-Alto-Adige hinzugekommen? diese müssen manuell auf die zwei NUTs-2-Einheiten aufteilt werden.
+italy_esfefrd <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/italy/it_2022-10-26_alle OPs.csv"))
+
+italy_esfefrd1 <- italy_esfefrd %>% 
+  filter(OC_DESCRIZIONE_PROGRAMMA=="PON FESR FSE CITTA' METROPOLITANE" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FESR FSE GOVERNANCE E CAPACITA' ISTITUZIONALE" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FESR FSE PER LA SCUOLA - COMPETENZE E AMBIENTI PER L'APPRENDIMENTO" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FESR FSE RICERCA E INNOVAZIONE" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FESR IMPRESE E COMPETITIVITA'" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FESR INFRASTRUTTURE E RETI" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FSE INCLUSIONE" |
+           OC_DESCRIZIONE_PROGRAMMA=="PON FSE SISTEMI DI POLITICHE ATTIVE PER L'OCCUPAZIONE")
+
+remove(italy_esfefrd)
+
+italy_esfefrd1 <- italy_esfefrd1 %>% 
+  select(OC_TITOLO_PROGETTO, OC_SINTESI_PROGETTO, FONDO_COMUNITARIO, OC_DESCRIZIONE_PROGRAMMA, COD_OB_TEMATICO, DESCR_OB_TEMATICO, OC_COD_ARTICOLAZ_PROGRAMMA,
+         DEN_REGIONE, DEN_PROVINCIA, FINANZ_UE, FINANZ_TOTALE_PUBBLICO, OC_DATA_INIZIO_PROGETTO, OC_DATA_FINE_PROGETTO_PREVISTA, OC_DENOM_BENEFICIARIO)
+
+colnames(italy_esfefrd1) <- c("operation_name", "operation_summary","fund", "operational_programme", "thematic_ojc", "thematic_ojc_long",
+                             "priority_axis", "region", "location_indicator", "total_EU_expenditure", "total_public_cofiance", "start_date", "end_date", "beneficiary")
+
+italy_esfefrd <- italy_esfefrd1
+remove(italy_esfefrd1)
+
+italy_esfefrd <- italy_esfefrd %>% 
+  filter(thematic_ojc=="13") %>% 
+  mutate(country_name="italy",
+         country_id=26,
+         fund=case_when(fund=="FESR"~"efrd",
+                        fund=="FSE"~"esf"),
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         total_EU_expenditure=str_replace(total_EU_expenditure, ",", "."),
+         total_public_cofiance=str_replace(total_public_cofiance, ",", "."),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         total_public_cofiance=as.numeric(total_public_cofiance),
+         eu_cofinancing_rate=total_EU_expenditure/total_public_cofiance,
+         nuts_2=case_when(region=="ABRUZZO" ~"ITF1",
+                          region=="BASILICATA" ~"ITF5",
+                          region=="CALABRIA" ~"ITF6",
+                          region=="CAMPANIA" ~"ITF3",
+                          region=="EMILIA-ROMAGNA" ~"ITH5",
+                          region=="FRIULI-VENEZIA GIULIA" ~"ITH4",
+                          region=="LAZIO" ~"ITI4",
+                          region=="LIGURIA" ~"ITC3",
+                          region=="LOMBARDIA" ~"ITC4",
+                          region=="MARCHE" ~"ITI3",
+                          region=="MOLISE" ~"ITF2",
+                          region=="PIEMONTE" ~"ITC1",
+                          region=="PUGLIA" ~"ITF4",
+                          region=="SARDEGNA" ~"ITG2",
+                          region=="SICILIA" ~"ITG1",
+                          region=="TOSCANA" ~"ITI1",
+                          region=="TRENTINO-ALTO ADIGE" ~"ITH",
+                          region=="UMBRIA" ~"ITI2",
+                          region=="VENETO" ~"ITH3",
+                          TRUE~"higher NUTS"),
+         nuts_2=case_when(nuts_2=="ITH" & beneficiary=="UNIVERSITA' DEGLI STUDI DI TRENTO"~"ITH2",
+                          nuts_2=="ITH" & beneficiary=="LIBERA UNIVERSITA' DI BOLZANO"~"ITH1",
+                          TRUE~nuts_2)) %>% 
+  select(-thematic_ojc, -thematic_ojc_long, -total_public_cofiance, -region, -operational_programme)
+
+
+trentino_alto_adige <- italy_esfefrd %>% 
+  filter(nuts_2=="ITH")
+table(trentino_alto_adige$beneficiary)
+
+funds <- funds %>% 
+  bind_rows(italy_esfefrd)
+
+
+
+#Lithuania####
+#4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
+
 
