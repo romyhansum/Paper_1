@@ -1518,8 +1518,152 @@ funds <- funds %>%
   bind_rows(italy_esfefrd)
 
 
-
 #Lithuania####
+lithuania_efrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/lithuania_2022-10-19_EFRD-Prio13.xlsx")
+
+lithuania_efrd <- lithuania_efrd %>% 
+  select(-Kodas, -`Paraiškos būsena`, -`Projekto išlaidų suma`, -Finansavimas, -`Išmokėta finansavimo suma`, -`Sutarties pasirašymo data`, -`Sutarties galiojimo pabaiga`)
+
+colnames(lithuania_efrd) <- c("operation_name", "beneficiary", "total", "total_EU_expenditure", "end_date", "start_date")
+
+lithuania_efrd <- lithuania_efrd %>% 
+  mutate(country_name="lithuania",
+         country_id=15,
+         fund="efrd",
+         eu_cofinancing_rate=total_EU_expenditure/total,
+         nuts_2="higher NUTS") %>% 
+  select(-total)
+
+lithuania_efrd <- lithuania_efrd %>% 
+  mutate(beneficiary=str_replace_all(beneficiary, '"', "")) %>% 
+  mutate(nuts_2=case_when(beneficiary=="2L Architects, UAB"~"LT01",
+                          TRUE~nuts_2))
+
+
+
+#Netherlands####
+##überprüfen, ob noch NA bei nuts_2 bestehen - dann ggf. händisch ergänzen (bei ESF sind die PLZ häufig Postbox-Nummern und daher nicht bei PLZ-Liste enthalten.)
+
+netherlands_esf <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/nl_2022-03-05_ESF.csv", skip=4))
+netherlands_efrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/nl_2022-10-27_EFRD.xlsx", skip=1)
+
+postal_code_netherlands  <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/Nuts-Postal code/pc2020_NL_NUTS-2021_v1.0.csv"))
+postal_code_netherlands <- postal_code_netherlands %>% 
+  mutate(nuts_2=str_extract(NUTS3, "NL\\d{2}"),
+         postal_code=str_extract(CODE, "\\w+\\s\\w+")) %>% 
+  mutate(location_indicator=str_replace(postal_code, " ", ""))
+
+
+netherlands_efrd <- netherlands_efrd %>% 
+  select(-`Project ID`, -`Titel van het project in het Engels`,-Autoriteit, -`Website project`,-`Overige publieke financiering`,-`Overige private financiering`,-`Totale kosten in Euro's`, -`Categorie Steunverlening`,
+         -`Straatnaam`, -`Huisnummer`, -Land, -`Datum van laatste bijwerking`, -`Medebegunstigde 1`, -`Medebegunstigde 2`, -`Medebegunstigde 3`, -`Medebegunstigde 4`, -`Medebegunstigde 5`, -`Medebegunstigde 6`,
+         -`Medebegunstigde 7`, -`Medebegunstigde 8`, -`Medebegunstigde 9`, -`Medebegunstigde 10`)
+
+
+colnames(netherlands_efrd) <- c("beneficiary", "operation_name", "fund", "operation_summary","total_EU_expenditure", "eu_cofinancing_rate","postal_code", "region", "start_date", "end_date", "thematic_ojc")
+
+  
+netherlands_efrd <- netherlands_efrd %>% 
+  filter(thematic_ojc=="13") %>% 
+  mutate(country_name="netherlands",
+         country_id=8,
+         fund="efrd",
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         total_EU_expenditure=str_replace(total_EU_expenditure, "€", ""),
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.", ""),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         eu_cofinancing_rate=eu_cofinancing_rate/100) %>% 
+  left_join(postal_code_netherlands, by="postal_code") %>% 
+  select(-NUTS3, -CODE) %>%
+  mutate(nuts_2=case_when(is.na(nuts_2) & region=="Drenthe"~"NL13",
+                          is.na(nuts_2) & region=="Flevoland"~"NL23",
+                          is.na(nuts_2) & region=="Friesland"~"NL12",
+                          is.na(nuts_2) &  region=="Gelderland"~"NL22",
+                          is.na(nuts_2) &  region=="Groningen"~"NL11",
+                          is.na(nuts_2) & region=="Noord-Brabant"~"NL41",
+                          is.na(nuts_2) &  region=="Noord-Holland"~"NL32",
+                     is.na(nuts_2) &  region=="Overijssel"~"NL21",
+                     is.na(nuts_2) &  region=="Utrecht"~"NL31",
+                     is.na(nuts_2) &  region=="Zuid-Holland"~"NL33",
+                     is.na(nuts_2) &   region=="Zeeland"~"NL34",
+                     is.na(nuts_2) &  region=="Limburg"~"NL42",
+                     TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2) & beneficiary=="Andela Techniek & Innovatie BV"~"NL23",
+                          is.na(nuts_2) & beneficiary=="Griphingo Pharmaceuticals"~"NL11",
+                          is.na(nuts_2) & beneficiary=="Stichting The Circular Transformers"~"NL32",
+                          is.na(nuts_2) & beneficiary=="ChainCraft Development BV"~"NL32",
+                          is.na(nuts_2) & beneficiary=="Aletta Jacobs School of Public Health"~"NL11",
+                          TRUE~nuts_2),
+         location_indicator=postal_code) %>% 
+  select(-thematic_ojc, -region, -postal_code)
+
+funds <- funds %>% 
+  bind_rows(netherlands_efrd)
+
+netherlands_esf <- netherlands_esf %>% 
+  select(-fieldcodes, -prog, -cat_inv_prio, -V5, -oper_id, -oper_seq, -"is_sub-oper_of", -"oper_major_proj\n_id\n", -oper_type, -oper_loc_geo, -oper_loc_country, -cat_them_obj, -fin_cost_total_elig, -fin_fund,  
+         -benef_nb, -benef_id, -benef_role, -benef_legal_status)
+
+colnames(netherlands_esf) <- c("priority_axis", "operation_name", "operation_summary", "start_date", "end_date", "location_indicator", "intervention_category", "total_EU_expenditure", 
+                               "eu_cofinancing_rate", "react", "beneficiary")
+
+
+netherlands_esf<- netherlands_esf %>% 
+  filter(react=="yes") %>% 
+  mutate(country_name="netherlands",
+         country_id=8,
+         fund="esf",
+         start_date=dmy(start_date),
+         end_date=dmy(end_date),
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.", ""),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         eu_cofinancing_rate=str_replace(eu_cofinancing_rate, "%", ""),
+         eu_cofinancing_rate=as.numeric(eu_cofinancing_rate),
+         eu_cofinancing_rate=eu_cofinancing_rate/100) %>% 
+  left_join(postal_code_netherlands, by="location_indicator") %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2) & location_indicator=="1201GM"~"NL32",
+                          is.na(nuts_2) & location_indicator=="1500GA"~"NL32",
+                          is.na(nuts_2) & location_indicator=="1800BC"~"NL32",
+                          is.na(nuts_2) & location_indicator=="2003PB"~"NL32",
+                          is.na(nuts_2) & location_indicator=="2300PC"~"NL33",
+                          is.na(nuts_2) & location_indicator=="2390AB"~"NL33",
+                          is.na(nuts_2) & location_indicator=="2500DJ"~"NL33",
+                          is.na(nuts_2) & location_indicator=="2700AA"~"NL33",
+                          is.na(nuts_2) & location_indicator=="2800BB"~"NL33",
+                          is.na(nuts_2) & location_indicator=="3000KS"~"NL33",
+                          is.na(nuts_2) & location_indicator=="3300AA"~"NL33",
+                          is.na(nuts_2) & location_indicator=="3503SB"~"NL31",
+                          is.na(nuts_2) & location_indicator=="3800EA"~"NL31",
+                          is.na(nuts_2) & location_indicator=="4000HH"~"NL22",
+                          is.na(nuts_2) & location_indicator=="4200AC"~"NL33",
+                          is.na(nuts_2) & location_indicator=="4460MC"~"NL34",
+                          is.na(nuts_2) & location_indicator=="4800RH"~"NL41",
+                          is.na(nuts_2) & location_indicator=="5000LH"~"NL41",
+                          is.na(nuts_2) & location_indicator=="5200GZ"~"NL41",
+                          is.na(nuts_2) & location_indicator=="5600RB"~"NL41",
+                          is.na(nuts_2) & location_indicator=="5700AZ"~"NL41",
+                          is.na(nuts_2) & location_indicator=="5902RK"~"NL42",
+                          is.na(nuts_2) & location_indicator=="6040AX"~"NL42",
+                          is.na(nuts_2) & location_indicator=="6400AA"~"NL42",
+                          is.na(nuts_2) & location_indicator=="6500HG"~"NL22",
+                          is.na(nuts_2) & location_indicator=="6710HK"~"NL22",
+                          is.na(nuts_2) & location_indicator=="6800EL"~"NL22",
+                          is.na(nuts_2) & location_indicator=="7000HA"~"NL22",
+                          is.na(nuts_2) & location_indicator=="7300ES"~"NL22",
+                          is.na(nuts_2) & location_indicator=="7500AA"~"NL21",
+                          is.na(nuts_2) & location_indicator=="7800RA"~"NL13",
+                          is.na(nuts_2) & location_indicator=="8000GA"~"NL21",
+                          is.na(nuts_2) & location_indicator=="8900JA"~"NL12",
+                          is.na(nuts_2) & location_indicator=="9700AN"~"NL11",
+                          is.na(nuts_2) & location_indicator=="9701BC"~"N11L",
+                          TRUE~nuts_2)) %>% 
+  select(-react, -NUTS3, -CODE, -postal_code)
+
+funds <- funds %>% 
+  bind_rows(netherlands_esf)
+
+
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
 
 
