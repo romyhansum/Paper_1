@@ -1605,7 +1605,7 @@ netherlands_esf <- netherlands_esf %>%
   select(-fieldcodes, -prog, -cat_inv_prio, -V5, -oper_id, -oper_seq, -"is_sub-oper_of", -"oper_major_proj\n_id\n", -oper_type, -oper_loc_geo, -oper_loc_country, -cat_them_obj, -fin_cost_total_elig, -fin_fund,  
          -benef_nb, -benef_id, -benef_role, -benef_legal_status)
 
-colnames(netherlands_esf) <- c("priority_axis", "operation_name", "operation_summary", "start_date", "end_date", "location_indicator", "intervention_category", "total_EU_expenditure", 
+colnames(netherlands_esf) <- c("priority_axis", "operation_name", "operation_summary", "start_date", "end_date", "location_indicator", "category_of_intervention", "total_EU_expenditure", 
                                "eu_cofinancing_rate", "react", "beneficiary")
 
 
@@ -1620,7 +1620,8 @@ netherlands_esf<- netherlands_esf %>%
          total_EU_expenditure=as.numeric(total_EU_expenditure),
          eu_cofinancing_rate=str_replace(eu_cofinancing_rate, "%", ""),
          eu_cofinancing_rate=as.numeric(eu_cofinancing_rate),
-         eu_cofinancing_rate=eu_cofinancing_rate/100) %>% 
+         eu_cofinancing_rate=eu_cofinancing_rate/100,
+         category_of_intervention=as.character(category_of_intervention)) %>% 
   left_join(postal_code_netherlands, by="location_indicator") %>% 
   mutate(nuts_2=case_when(is.na(nuts_2) & location_indicator=="1201GM"~"NL32",
                           is.na(nuts_2) & location_indicator=="1500GA"~"NL32",
@@ -1662,6 +1663,92 @@ netherlands_esf<- netherlands_esf %>%
 
 funds <- funds %>% 
   bind_rows(netherlands_esf)
+
+
+#Poland####
+##Achtung bei efrd2: leere Zeilen löschen vor dem Import in R. Aktuell noch 0 Vorhaben in thematischem Objective 13.
+##Falls in efrd2 noch Vorhaben hinzukommen - gleiches Vorgehen wie bei EFRD1.
+##checken, ob bei efrd3 doch noch Vorhaben in Achse XI hinzugekommen sind.
+##checken, ob bei efrd4 doch noch weitere Vorhaben hinzugekommen sind, die REACT-EU sein und nicht higher NUTS sein könnten.
+##checken, ob bei efrd5 doch noch Vorhaben in Prioritet 6 hinzugekommen sind.
+#all operations that could in theory be part of REACT-EU given their start/end date and budget are higher NUTS operations. Due to their unclear thematic objective, they are not included.
+
+poland_efrd1 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/poland/pl_2022-10-03.xlsx", skip=2)
+poland_efrd2 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/poland/pl_2021-02-02_OP knowledge education development_non-competitive projects-ERDF.xlsx", skip=2)
+poland_efrd3 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/poland/pl_2021-02-18_OP infrastructure and environment_non-competitive projects-ERDF.xlsx", skip=3, col_types = c("skip", "text", "text", "text", "skip",  "numeric", "numeric", "skip", "skip", "date", "date"))
+##einzelne Daten (diejenigen in Textform) fehlen.
+poland_efrd4 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/poland/pl_2021-03-21_OP digital poland_non-competitive projects-ERDF.xlsx", skip=3)
+poland_efrd5 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/poland/pl_2022-02-18_OP smart growth_non-competitive projects-ERDF.xlsx", skip=3, col_types = c("skip", "text", "text", "text", "numeric", "numeric", "skip", "skip", "date", "date"))
+##einzelne Daten (diejenigen in Textform) fehlen.
+
+poland_efrd1 <- poland_efrd1 %>% 
+  select(c(1, 2, 4, 6, 7, 12, 13, 15, 17, 18, 21, 22))
+colnames(poland_efrd1) <- c("operation_name", "operation_summary", "beneficiary", "programme", "priority_axis", "total_EU_expenditure", "eu_cofinancing_rate", "location_indicator",
+                                "start_date", "end_date", "category_of_intervention", "thematic_ojc")
+
+poland_efrd1 <- poland_efrd1 %>% 
+  filter(thematic_ojc=="13 Wspieranie kryzysowych działań naprawczych w kontekście pandemii COVID-19 i jej skutków społecznych oraz przygotowanie do ekologicznej i cyfrowej odbudowy gospodarki zwiększającej jej odporność") %>% 
+  filter(programme=="Program Operacyjny Infrastruktura i Środowisko 2014-2020" | programme=="Program Operacyjny Polska Cyfrowa" |
+           programme=="Program Operacyjny Inteligentny Rozwój" | programme=="Program Operacyjny Wiedza Edukacja Rozwój") %>% 
+  mutate(country_name="poland",
+         country_id=74,
+         fund="efrd",
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         eu_cofinancing_rate=eu_cofinancing_rate/100,
+         total_EU_expenditure=total_EU_expenditure/4.725) #amount is indicated in PLN (exchange rate:1/4,725,)
+
+poland_efrd1 <- poland_efrd1 %>% 
+  mutate(location_indicator1=location_indicator) %>% 
+  separate(col=location_indicator1,
+           into=c("regions", "subregions"),
+           sep=",") %>% 
+  mutate(nuts_2=case_when(str_detect(subregions, "WOJ")~"higher NUTS",
+                          regions=="Cały Kraj"~"higher NUTS",
+                          TRUE~"NA")) %>% 
+  mutate(nuts_2=case_when(nuts_2=="NA" & regions=="WOJ.: DOLNOŚLĄSKIE"~"PL51",
+                          nuts_2=="NA" & regions=="WOJ.: KUJAWSKO-POMORSKIE"~"PL61",
+                          nuts_2=="NA" & regions=="WOJ.: ŁÓDZKIE"~"PL71",
+                          nuts_2=="NA" & regions=="WOJ.: LUBELSKIE"~"PL81",
+                          nuts_2=="NA" & regions=="WOJ.: LUBUSKIE"~"PL43",
+                          nuts_2=="NA" & regions=="WOJ.: MAŁOPOLSKIE"~"PL21",
+                          nuts_2=="NA" & regions=="WOJ.: MAZOWIECKIE"~"PL92",
+                          nuts_2=="NA" & regions=="WOJ.: OPOLSKIE"~"PL52",
+                          nuts_2=="NA" & regions=="WOJ.: PODKARPACKIE"~"PL82",
+                          nuts_2=="NA" & regions=="WOJ.: PODLASKIE"~"PL84",
+                          nuts_2=="NA" & regions=="WOJ.: POMORSKIE"~"PL63",
+                          nuts_2=="NA" & regions=="WOJ.: ŚLĄSKIE"~"PL22",
+                          nuts_2=="NA" & regions=="WOJ.: ŚWIĘTOKRZYSKIE"~"PL72",
+                          nuts_2=="NA" & regions=="WOJ.: WARMIŃSKO-MAZURSKIE"~"PL62",
+                          nuts_2=="NA" & regions=="WOJ.: WIELKOPOLSKIE"~"PL41",
+                          nuts_2=="NA" & regions=="WOJ.: ZACHODNIOPOMORSKIE"~"PL42",
+                          nuts_2=="NA" & regions=="WOJ.: WARSZAWSKI"~"PL92",
+                          TRUE~nuts_2)) %>% 
+  select(-programme, -thematic_ojc, -regions, -subregions)
+
+funds <- funds %>% 
+  bind_rows(poland_efrd1)
+
+poland_efrd2 <- poland_efrd2 %>% 
+  select(c(1, 2, 4, 6, 7, 12, 13, 15, 17, 18, 21, 22))
+colnames(poland_efrd2) <- c("operation_name", "operation_summary", "beneficiary", "programme", "priority_axis", "total_EU_expenditure", "eu_cofinancing_rate", "location_indicator",
+                            "start_date", "end_date", "category_of_intervention", "thematic_ojc")
+poland_efrd2 <- poland_efrd2 %>% 
+  filter(thematic_ojc=="13 Wspieranie kryzysowych działań naprawczych w kontekście pandemii COVID-19 i jej skutków społecznych oraz przygotowanie do ekologicznej i cyfrowej odbudowy gospodarki zwiększającej jej odporność")
+
+colnames(poland_efrd3) <- c("operation_name","beneficiary", "priority_axis", "total", "total_EU_expenditure","start_date", "end_date")
+table(poland_efrd3$priority_axis)
+poland_efrd3 <- poland_efrd3 %>% 
+  filter(priority_axis=="XI")
+
+poland_efrd4 <- poland_efrd4 %>% 
+  select(-"Numer umowy/ decyzji/ aneksu", -"Działanie - nazwa")
+colnames(poland_efrd4) <- c("operation_name","beneficiary","total", "total_EU_expenditure","start_date", "end_date")
+
+colnames(poland_efrd5) <- c("operation_name","beneficiary", "priority_axis", "total", "total_EU_expenditure","start_date", "end_date")
+table(poland_efrd5$priority_axis)
+
+#Portugal####
 
 
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
