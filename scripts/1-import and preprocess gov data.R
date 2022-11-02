@@ -153,9 +153,13 @@ cabinet_nat_and_reg <- cabinet1 %>%
 #Cabinet change within one election term is specified with cabinet_change==1.
 #Cabinet change within the same year is specified with cabinet_change_withinyear==1.
 #If several within-term cabinet changes occur during one year, only the last cabinet is taken into account and only for the last the relevant_cabinet==1.
-#If a government is formed in an election year and (without new election), another gov in the subsequent year, the latter gov is used.
+#If a government is formed in an election year and (without new election), another gov in the subsequent year, the latter gov is used for the second year after election.
 #Summarized, firstyear_incumbent reflects the de facto first year of incumbency (e.g., one year after election year if gov was created in it).
 #firstyear_incumbent==0 if cabinet is not relevant (e.g., first cabinet of two within one year without election)
+
+##löschen: Reminder: falls Übergangszeiten nach Wahljahren/Kabinett geändert werden soll, muss auch der nachfolgende code zu cabinet_change_within year angepasst werden.
+##dann muss nämlich nicht mehr unterschieden werden, ob es sich um eine Kabinettsbildung im election year handelt.
+
 cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
   mutate(number=1) %>%
   group_by(election_id, election_date, country_name, region) %>%
@@ -190,6 +194,18 @@ cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
                                        cabinet_change==1 & relevant_cabinet==0 ~ 0)) %>%
   select(-relevant_cabinet, -counter, -number, -start_year, -cabinetinelectionyear, -cabinet_change_withinyear, -electionyearandone, -cabinet_change)
 
+
+cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
+  mutate(election_date=ymd(election_date)) %>%
+  mutate(electionyearandone=as.character((year(election_date)+1)),
+         start_year=as.character(year(start_date))) %>%
+  mutate(firstyear_incumbent=case_when(cabinet_change==0 ~ electionyearandone,
+                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==0 & cabinetinelectionyear==TRUE ~ electionyearandone,
+                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==0 & cabinetinelectionyear==FALSE ~ start_year,
+                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==1 & (electionyearandone>start_year) ~ electionyearandone,
+                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==1 & (electionyearandone<=start_year) ~ start_year,
+                                       cabinet_change==1 & relevant_cabinet==0 ~ "0")) %>%
+  select(-relevant_cabinet, -counter, -number, -start_year, -cabinetinelectionyear, -cabinet_change_withinyear, -electionyearandone, -cabinet_change)
 
 #Period for which each government is the relevant incumbent.
 #Period 1900-01-01 - 1900-12-31 as placeholder for NA.
@@ -284,7 +300,34 @@ cabinet_nat_and_reg_20 <- cabinet_nat_and_reg %>%
 cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_20 %>%
   bind_rows(cabinet_nat_and_reg_21)
 
+#Alignment between national and regional governments, where applicable.
+#Alignment1: Lower-level gvt. leader belongs to party in upper level gvt. coalition.
+#Alignment2: Lower-level gvt. leader belongs to party of upper-level gvt. leader.
+#Alignment3: Lower-level gvt. party belongs to party of upper-level gvt. leader.
+#Alignment==1 stands for aligned, alignment==0 stands for unaligned, alignment==99 for only national observations.
 
+cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_2122 %>%
+  mutate(alignment1= case_when((prime_min_party_regional %in% c(govparty1_national, govparty2_national, govparty3_national, govparty4_national, govparty5_national, govparty6_national, govparty7_national)) & (is.na(prime_min_party_regional)==FALSE) ~1,
+                               !(prime_min_party_regional %in% c(govparty1_national, govparty2_national, govparty3_national, govparty4_national, govparty5_national, govparty6_national, govparty7_national)) & (is.na(prime_min_party_regional)==FALSE) ~0,
+                               TRUE~99),
+         alignment2=case_when((prime_min_party_regional %in% prime_min_party_national) & (is.na(prime_min_party_regional)==FALSE) ~1,
+                              !(prime_min_party_regional %in% prime_min_party_national) & (is.na(prime_min_party_regional)==FALSE) ~0,
+                              TRUE~99),
+         alignment3=0)%>%
+  mutate(alignment3=case_when(govparty1_regional==prime_min_party_national ~1,
+                              govparty2_regional==prime_min_party_national ~1,
+                              govparty3_regional==prime_min_party_national ~1,
+                              govparty4_regional==prime_min_party_national ~1,
+                              govparty5_regional==prime_min_party_national ~1,
+                              govparty6_regional==prime_min_party_national ~1,
+                              govparty7_regional==prime_min_party_national ~1,
+                              prime_min_party_regional==prime_min_party_national ~1,
+                              region=="national"~99,
+                              TRUE~alignment3))
+
+
+test1 <- cabinet_nat_and_reg_2122 %>%
+count(alignment2, alignment3)
 
 
 write_csv(regional_gov, file.path("./data/processed/","reg_and_nat_governments_2122.csv"))
