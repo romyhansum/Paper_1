@@ -5,8 +5,6 @@ library(readxl)
 library(readr)
 library(data.table)
 
-
-
 reg_and_nat_governments_2122  <- read_csv("./data/processed/reg_and_nat_governments_2122.csv")
 
 #1. step: Import Excel/csv list of observations
@@ -1749,8 +1747,100 @@ colnames(poland_efrd5) <- c("operation_name","beneficiary", "priority_axis", "to
 table(poland_efrd5$priority_axis)
 
 #Portugal####
+portugal_efrdesf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/portugal/portugal_2022-02-28_competitivenessOP.xls", sheet="AprovadosCOMPETE_REACT28FEV2022")
+portugal_efrdesf <- portugal_efrdesf %>% 
+  select(Beneficiário, Designação, fundo, `[Dec/TA]Data Início Proj.`,`[Dec/TA]Data Fim Proj.`, `DEC ELEG`, `DEC INC`, `Concelho(s)2`)
 
+colnames(portugal_efrdesf) <- c("beneficiary","operation_name", "fund","start_date", "end_date", "total", "total_EU_expenditure", "location_indicator")
 
+#Romania####
+romania_esfefrd <- read_csv2("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/ro_2022-10-19.csv", locale = locale(encoding = "ISO-8859-1"))
+
+romania_esfefrd <- romania_esfefrd %>% 
+  select(-`Cui Beneficiar`, -`Cod SMIS`, -`Categorie Interventie`, -`Data Decl Efectiva Final Op`, -`Cofinantare RO`, -`Valoare Totala Fara TVA`, -`TVA Valoare Totala`)
+
+colnames(romania_esfefrd) <- c("programme", "beneficiary","thematic_ojc", "operation_name", "category_of_intervention", "location_indicator", "operation_summary", "start_date", "end_date", "fund", "currency", "total", "total_EU_expenditure")
+
+romania_esfefrd <- 
+  romania_esfefrd %>% 
+  filter(thematic_ojc=="Promovarea reparãrii daunelor provocate de crizã în contextul pandemiei de COVID-19 ?i pregãtirea unei redresãri verzi, digitale ?i reziliente a economiei"|
+           thematic_ojc=="Sprijinirea ameliorãrii efectelor provocate de crizã în contextul pandemiei de COVID-19 ?i al consecin?elor sale sociale ?i pregãtirea unei redresãri verzi, digitale ?i reziliente a economiei") %>% 
+  mutate(total_EU_expenditure=str_replace(total_EU_expenditure, ",", "."),
+         total=str_replace(total, ",", "."),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         total=as.numeric(total),
+         total_EU_expenditure=total_EU_expenditure/4.923, #amount is indicated in RON (exchange rate:1/4,923)
+         total=total/4.923, #amount is indicated in RON (exchange rate:1/4,923),
+         eu_cofinancing_rate=total_EU_expenditure/total,
+         start_date=dmy(start_date),
+         end_date=dmy(end_date),
+         country_name="romania",
+         country_id=23,
+         fund=case_when(fund=="Fondul Social European"~"esf",
+                        fund=="Fondul European de Dezvoltare Regionalã"~"efrd")) %>% 
+  select(-thematic_ojc, -programme, -currency, -total)
+
+romania_esfefrd <- romania_esfefrd %>% 
+  mutate(location_indicator1=location_indicator) %>% 
+  separate(col = location_indicator1,
+           into = c("municipality", "county", "region", "country"), 
+           sep = ",") %>% 
+  mutate(nuts_2=case_when(country!="România\n"~"multiple NUTS",
+                          TRUE~"NA")) %>% 
+  mutate(nuts_2=case_when(nuts_2=="NA" & region=="Bucureºti - Ilfov"~"RO32",
+                          nuts_2=="NA" & region=="Centru"~"RO12",
+                          nuts_2=="NA" & region=="Nord-Est"~"RO21",
+                          nuts_2=="NA" & region=="Nord-Vest"~"RO11",
+                          nuts_2=="NA" & region=="Sud-Est"~"RO22",
+                          nuts_2=="NA" & region=="Sud-Vest Oltenia"~"RO41",
+                          nuts_2=="NA" & region=="Sud - Muntenia"~"RO31",
+                          nuts_2=="NA" & region=="Vest"~"RO42",
+                          TRUE~nuts_2)) %>% 
+  select(-region, -country, -municipality, -county)
+  
+
+funds <- funds %>% 
+  bind_rows(romania_esfefrd)
+
+#Slovakia####
+slovakia_esfefrd <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/slovakia_2022-08-12.csv", col_types = cols(.default="?", `Príspevok Únie / Expeditures allocated to the selected operation - Union support`="character"))
+
+postal_code_slovakia  <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/Nuts-Postal code/pc2020_SK_NUTS-2021_v2.0.csv"))
+postal_code_slovakia  <- postal_code_slovakia %>% 
+  mutate(nuts_2=str_extract(NUTS3, "SK\\d{2}"),
+         location_indicator=str_replace_all(CODE, "\\'", "")) %>% 
+  mutate(location_indicator=str_replace(location_indicator, "\\s", "")) %>% 
+  mutate(location_indicator=as.numeric(location_indicator))
+
+slovakia_esfefrd <- slovakia_esfefrd %>% 
+  select(-`IČO / Identification number of the beneficiary`, -`Ulica / Street`, -`Číslo / Number`, -`Zemepisná šírka / Latitude`, -`Zemepisná dĺžka / Longitude`,
+         -`Celkové nárokovateľné výdaje pridelené na projekt / Total eligible expenditure allocated to the selected operation`, -`Vytvorené`,
+         -`Verejné zdroje / Expeditures allocated to the selected operation - national public funding`, -`Vlastné zdroje / Expeditures allocated to the selected operation - national private funding`,
+         -`Dátum poslednej aktualizácie / Date of last update of the list of operations`, -`Stav / Status of the operation`)
+
+colnames(slovakia_esfefrd) <- c("programme", "priority_axis","operation_name", "operation_summary","beneficiary", "location_indicator","start_date", "end_date",
+                                "places_of_project", "category_of_intervention", "fund", "eu_cofinancing_rate", "total_EU_expenditure")
+
+slovakia_esfefrd <- slovakia_esfefrd %>% 
+  filter(programme=="Integrovaný regionálny operačný program" | programme=="Operačný program Efektívna verejná správa" | programme=="Operačný program Ľudské zdroje") %>% 
+  filter(priority_axis=="4. REACT - EU" | priority_axis=="7. REACT-EÚ" | priority_axis=="8. REACT-EU") %>% 
+  mutate(country_name="slovakia",
+         country_id=1,
+         fund=case_when(fund=="Európsky sociálny fond"~"esf",
+                        fund=="Európsky fond regionálneho rozvoja"~"efrd"),
+         start_date=dmy(start_date),
+         end_date=dmy(end_date),
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.(?=[:digit:]{1,2}$)", "\\,")) %>% 
+  mutate(total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.", "")) %>% 
+  mutate(total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\,", "\\.")) %>% 
+  mutate(total_EU_expenditure=as.numeric(total_EU_expenditure)) %>% 
+  left_join(postal_code_slovakia, by="location_indicator") %>% 
+  select(-NUTS3, -CODE, -programme, -places_of_project) %>% 
+  mutate(location_indicator=as.character(location_indicator))
+
+funds <- funds %>% 
+  bind_rows(slovakia_esfefrd)
+         
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
 
 
