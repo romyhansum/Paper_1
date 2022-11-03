@@ -1841,6 +1841,178 @@ slovakia_esfefrd <- slovakia_esfefrd %>%
 funds <- funds %>% 
   bind_rows(slovakia_esfefrd)
          
+#Slovenia####
+##checken, wie REACT-EU Prioachse in ESF genau heißt (hier nur ein guess, da noch keine Vorhaben).
+##alle Vorhaben auf höherer NUTS-Ebene bislang. Checken, ob weiterhin der Fall.
+slovenia_esfefrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/slovenia_2022-03-03.xlsx", skip=4)
+
+slovenia_esfefrd <- slovenia_esfefrd %>% 
+  select(c(1, 4, 7, 8, 9, 10, 11, 15, 17, 18, 19, 20, 21, 22, 24, 25,26, 27))
+
+colnames(slovenia_esfefrd) <- c("operation_name", "operation_summary", "fund", "eu_cofinancing_rate1", "eu_cofinancing_rate2","eu_cofinancing_rate3","beneficiary", "priority_axis","start_date", "end_date", "total_EU_expenditure", "EasternSlovenia", "WesternSlovenia", "wholeSlovenia",
+                                "category_of_intervention", "category_of_intervention2", "category_of_intervention3", "category_of_intervention4")
+  
+slovenia_esfefrd<- slovenia_esfefrd %>% 
+  filter(fund=="ESRR" | fund=="ESS") %>% 
+  filter(priority_axis=="React-EU- ESRR" | priority_axis=="React-EU- ESS") %>% 
+  mutate(country_name="slovenia",
+         country_id=60,
+         fund=case_when(fund=="ESS"~"esf",
+                        fund=="ESRR"~"efrd"),
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         nuts_2=case_when(total_EU_expenditure==wholeSlovenia~"higher NUTS",
+                          total_EU_expenditure==EasternSlovenia~"SI03",
+                          total_EU_expenditure==WesternSlovenia~"SI04",
+                          TRUE~"multiple NUTS")) %>% 
+  select(-eu_cofinancing_rate1, -eu_cofinancing_rate2, -eu_cofinancing_rate3, -EasternSlovenia, -WesternSlovenia, -wholeSlovenia)
+
+
+funds <- funds %>% 
+  bind_rows(slovenia_esfefrd)
+  
+#Spain####
+spain_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/spain/esf/spain_listado_esf_op_poefe.xlsx", skip=3)
+
+spain_esf <- spain_esf %>% 
+  select(-`CODIGO \r\nOPERACIÓN`, -`PAÍS`)
+
+colnames(spain_esf) <- c("beneficiary", "operation_name", "global_code","operation_summary","start_date", "end_date", "total", "eu_cofinancing_rate", "category_of_intervention")
+
+spain_esf <- spain_esf %>% 
+  mutate(country_name="spain",
+         country_id=27,
+         fund="esf",
+         start_date=ymd(start_date),
+         end_date=ymd(end_date))
+
+#Sweden####
+##Überprüfen, ob noch weitere Vorhaben im ESF dazugekommen sind.
+##Überprüfen, ob noch weitere zuordbare locations bei EFRD hinzugekommen sind (alle nicht definierten unter multiple nuts)
+
+sweden_esf <- read_csv2("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/sweden_2022-10-13_ESF.csv")
+sweden_efrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/sweden_EFRD_REACT.xlsx", skip=1)
+
+sweden_esf <- sweden_esf %>% 
+  select(-Projektnummer, -`Planerat antal deltagare`, -Kontaktperson, -`E-post`, -`Specifikt mål`)
+
+colnames(sweden_esf) <- c("operation_name", "location_indicator","beneficiary", "project_period", "total", "total_EU_expenditure" )
+
+sweden_esf <- sweden_esf %>% 
+  mutate(country_name="sweden",
+         country_id=35,
+         fund="esf") %>% 
+  separate(col =project_period,
+           into = c("start_date", "end_date"), 
+           sep = " - ") %>% 
+  mutate(start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         total=str_replace_all(total, "\\s", ""),
+         total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\s", ""),
+         total=as.numeric(total),
+         total_EU_expenditure=as.numeric(total_EU_expenditure),
+         eu_cofinancing_rate=total_EU_expenditure/total,
+         total_EU_expenditure=total_EU_expenditure/10.913) %>%  #amount is indicated in SEK (exchange rate:1/10,9133)
+  select(-total)
+
+sweden_esf <- sweden_esf %>% 
+  mutate(nuts_2=case_when(beneficiary=="176 Arbetsmarknads- och Socialförvaltningen, Malmö Stad, 176 Arbetsmarknadsavdelningen"~"SE22",
+                          beneficiary=="176 Arbetsmarknads- och Socialförvaltningen, Malmö Stad, Enheten för arbete & studier Unga, Arbetsmarknadsavdelningen"~"SE22",
+                          beneficiary=="Affärskompetens Sverige, Affärskompetens"~"higher NUTS",
+                          beneficiary=="Arbetsförmedlingen, Arbetsförmedlingen HK"~"higher NUTS",
+                          beneficiary=="Burlövs kommun, Kommunledningskontoret"~"SE22",
+                          beneficiary=="Centrum för Informationslogistik/Campus Ljungby, Campus Ljungby"~"SE21",
+                          beneficiary=="Coompanion Sverige, Coompanion Sverige"~"higher NUTS",
+                          beneficiary=="Falun Borlänge-regionen AB, Falun Borlänge-regionen AB"~"SE31",
+                          beneficiary=="Hässleholms kommun, Arbetsmarknadsenheten"~"SE22",
+                          beneficiary=="Karlskoga kommun, KFE, Socialförvaltningen"~"SE12",
+                          beneficiary=="Karlstads kommun, Värmlands projektparaply, Karlstads kommun, Arbetsmarknad och socialförvaltningen"~"SE31",
+                          beneficiary=="Landskrona stad, Landskrona stad, Utbildningsförvaltningen"~"SE22",
+                          beneficiary=="Mariestads kommun, Arbetsmarknadsenheten Maria Nova"~"SE23",
+                          beneficiary=="Nätverk Westum, Nätverk Westum (Museigatan 2 3tr, Uddevalla)"~"SE23",
+                          beneficiary=="Nybro kommun, Arbetsmarknadsenheten"~"SE21",
+                          beneficiary=="Osby kommun, Osby kommun Kompetensa"~"SE22",
+                          beneficiary=="Östra Göinge kommun, Arbetsmarknadsenheten"~"SE22",
+                          beneficiary=="Piteå kommun, Samhällsbyggnad, Kompetensförsörjning"~"SE33",
+                          beneficiary=="Region Gävleborg, Arbetsmarknad och Kompetens"~"SE31",
+                          beneficiary=="Region Skåne, Region Skånes kulturförvaltning"~"SE22",
+                          beneficiary=="Region Uppsala, Regionkontoret, Avdelningen för regional utveckling"~"SE12",
+                          beneficiary=="Region Västerbotten, Näringsliv och Samhällsbyggnad"~"SE33",
+                          beneficiary=="Region Västmanland, Regionala utvecklingsförvaltningen"~"SE12",
+                          beneficiary=="Riksföreningen Teknikcollege Sverige, Riksföreningen Teknikcollege Sverige"~"higher NUTS",
+                          beneficiary=="Robertsfors Kommun, Kommunledningskontoret"~"SE33",
+                          beneficiary=="Samordningsförbundet RAR, Samordningsförbundet RAR"~"SE12",
+                          beneficiary=="Stiftelsen Activa i Örebro län, Stiftelsen Activa i Örebro län"~"SE12",
+                          beneficiary=="Stiftelsen Tornedalens Folkhögskola, Tornedalens Folkhögskola"~"SE33",
+                          beneficiary=="Svenska Fotbollförbundet, Svenska Fotbollförbundet"~"higher NUTS",
+                          beneficiary=="Svenska Musikerförbundet, Musikerförbundet"~"higher NUTS",
+                          beneficiary=="Sveriges bagare & konditorer AB, Sveriges bagare & konditorer AB"~"higher NUTS",
+                          beneficiary=="Sveriges Bilåtervinnares Riksförbund Service AB, Sveriges Bilåtervinnares Riksförbund Service AB"~"higher NUTS",
+                          beneficiary=="Tillväxt Landskrona AB, Tillväxt Landskrona AB"~"SE22",
+                          beneficiary=="Trä och teknikcollege i Skellefteå AB, T2 college"~"SE33",
+                          beneficiary=="Trossamfundet Svenska kyrkan, Kyrkokansliet, Uppsala"~"higher NUTS",
+                          beneficiary=="Urkraft ASF AB, Urkraft"~"SE33",
+                          beneficiary=="Vägen ut! kooperativen ek för, Konsortiet Vägen ut!"~"multiple NUTS",
+                          beneficiary=="Värnamo kommun, Campus Värnamo, Campus Värnamo"~"SE21",
+                          beneficiary=="YrkesAkademin AB, YrkesAkademin"~"higher NUTS",
+                          TRUE~"NA"))
+
+funds <- funds %>% 
+  bind_rows(sweden_esf)
+
+sweden_efrd <- sweden_efrd %>% 
+  select(c(3, 5, 7, 8, 9, 10, 14, 23))
+
+colnames(sweden_efrd) <- c("beneficiary", "total_EU_expenditure", "operation_name", "operation_summary", "start_date", "end_date",
+                           "location_indicator", "total")
+
+sweden_efrd<- sweden_efrd %>% 
+  mutate(country_name="sweden",
+         country_id=35,
+         fund="efrd",
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         total=as.numeric(total),
+         eu_cofinancing_rate=total_EU_expenditure/total,
+         total_EU_expenditure=total_EU_expenditure/10.913, #amount is indicated in SEK (exchange rate:1/10,9133)
+         nuts_2=case_when(location_indicator=="Blekinge"~"SE22",
+                          location_indicator=="Dalarna"~"SE31",
+                          location_indicator=="Blekinge, Skåne"~"SE22",
+                          location_indicator=="Dalarna, Gävleborg, Värmland"~"SE31",
+                          location_indicator=="Gävleborg"~"SE31",
+                          location_indicator=="Gotland"~"SE21",
+                          location_indicator=="Halland"~"SE23",
+                          location_indicator=="Halland, Västra Götaland"~"SE23",
+                          location_indicator=="Jämtland"~"SE32",
+                          location_indicator=="Jämtland, Västernorrland"~"SE32",
+                          location_indicator=="Jönköping"~"SE21",
+                          location_indicator=="Kalmar"~"SE21",
+                          location_indicator=="Kronoberg"~"SE21",
+                          location_indicator=="Norrbotten"~"SE33",
+                          location_indicator=="Norrbotten, Västerbotten"~"SE33",
+                          location_indicator=="Örebro"~"SE12",
+                          location_indicator=="Östergötland"~"SE12",
+                          location_indicator=="Skåne"~"SE22",
+                          location_indicator=="Södermanland"~"SE12",
+                          location_indicator=="Södermanland, Uppsala, Västmanland, Örebro"~"SE12",
+                          location_indicator=="Södermanland, Uppsala, Västmanland, Örebro, Östergötland"~"SE12",
+                          location_indicator=="Södermanland, Västmanland"~"SE12",
+                          location_indicator=="Stockholm"~"SE11",
+                          location_indicator=="Uppsala"~"SE12",
+                          location_indicator=="Värmland"~"SE31",
+                          location_indicator=="Västerbotten"~"SE33",
+                          location_indicator=="Västernorrland"~"SE32",
+                          location_indicator=="Västmanland"~"SE12",
+                          location_indicator=="Västmanland, Örebro"~"SE12",
+                          location_indicator=="Västra Götaland"~"SE23",
+                          TRUE~"multiple NUTS")) %>%  
+  select(-total)
+
+funds <- funds %>% 
+  bind_rows(sweden_efrd)
+
+write_csv(funds, file.path("./data/processed/","REACT-EU-funds.csv"))
+
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
 
 
