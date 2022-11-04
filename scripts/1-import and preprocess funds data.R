@@ -180,7 +180,7 @@ bulgaria_efrd2 <- bulgaria_efrd2 %>%
   mutate(location_indicator=case_when(is.na(nuts_2)==TRUE~municipality1,
                                       TRUE~location_indicator)) %>% 
   left_join(LAU_bulgaria, by="location_indicator") %>% 
-  mutate(nuts_2=nuts_2.y) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
   mutate(nuts_2=case_when(is.na(nuts_2)==TRUE~nuts_2.y,
                           TRUE~nuts_2)) %>% 
   select(-municipality1, -nuts_2.x, -nuts_2.y)
@@ -469,9 +469,7 @@ bulgaria_efrd2 <- bulgaria_efrd2 %>%
 
 ##Test, ob Begünstigte hinzugekommen sind
 test <- bulgaria_efrd2 %>% 
-  filter(is.na(nuts_2)) %>%
-  group_by(location_indicator) %>% 
-  summarize(freq=n())
+  filter(is.na(nuts_2))
 
 funds <- funds %>% 
   bind_rows(bulgaria_efrd2)
@@ -1300,7 +1298,7 @@ funds <- funds %>%
   bind_rows(france_esf1)
 
 #Germany####
-germany_esf <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/germany/DE_2022-10-19_Bund_ESF.csv"))
+germany_esf <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/germany/DE_Bund_ESF.csv"))
 
 germany_esf <- germany_esf %>% 
   select(-Land, -Finanzierungsform, -`Art des Gebietes`, -Postleitzahl, -Bundesland, -`Territoriale Umsetzungsmechanismen`, -`Sekundäres ESF-Thema`, -`Thematisches Ziel`, -Wirtschaftstätigkeit, -Aktualisierungsdatum)
@@ -1320,7 +1318,7 @@ germany_esf <- germany_esf %>%
          end_date=dmy(end_date)) %>% 
   mutate(total=str_replace_all(total, ",", ".")) %>% 
   mutate(total=as.numeric(total)) %>% 
-  mutate(total_EU_expenditure=total*eu_cofinancing_rate,
+  mutate(total_EU_expenditure=total,
          nuts_2=str_extract(location_indicator, "DE[:alnum:]{2}")) %>% 
   select(-total)
 
@@ -1747,11 +1745,172 @@ colnames(poland_efrd5) <- c("operation_name","beneficiary", "priority_axis", "to
 table(poland_efrd5$priority_axis)
 
 #Portugal####
-portugal_efrdesf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/portugal/portugal_2022-02-28_competitivenessOP.xls", sheet="AprovadosCOMPETE_REACT28FEV2022")
-portugal_efrdesf <- portugal_efrdesf %>% 
+##überprüfen, ob bei efrdesf1 noch weitere undefinierte location_indicators hinzugekommen sind (siehe test)
+portugal_efrdesf1 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/portugal/portugal_2022-02-28_competitivenessOP.xls", sheet="AprovadosCOMPETE_REACT28FEV2022")
+portugal_efrdesf2 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/portugal/portugal_2022-11-03_esfefrd_REACT.xlsx")
+
+
+
+LAU_portugal <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/EU-27-LAU-2021-NUTS-2021.xlsx", sheet="PT")
+LAU_portugal <- LAU_portugal %>% 
+  mutate(nuts_2=str_extract(`NUTS 3 CODE`, "PT\\d{2}"),
+         location_indicator=`LAU NAME NATIONAL`,
+         location_indicator2=location_indicator,
+         location_indicator2=str_replace(location_indicator2, "União das freguesias de ", ""),
+         location_indicator2=str_replace(location_indicator2, "\\({1}[:alpha:]+\\s*[:alpha:]*\\s*[:alpha:]*\\s*[:alpha:]*\\s*[:alpha:]*\\){1}", "")) %>% 
+  separate(col = location_indicator2,
+           into=c("lau1", "lau2", "lau3", "lau4", "lau5", "lau6"),
+           sep=" e |\\,") %>% 
+  select(nuts_2, location_indicator, lau1, lau2, lau3, lau4, lau5, lau6)
+
+
+portugal_efrdesf1 <- portugal_efrdesf1 %>% 
   select(Beneficiário, Designação, fundo, `[Dec/TA]Data Início Proj.`,`[Dec/TA]Data Fim Proj.`, `DEC ELEG`, `DEC INC`, `Concelho(s)2`)
 
-colnames(portugal_efrdesf) <- c("beneficiary","operation_name", "fund","start_date", "end_date", "total", "total_EU_expenditure", "location_indicator")
+colnames(portugal_efrdesf1) <- c("beneficiary","operation_name", "fund","start_date", "end_date", "total", "total_EU_expenditure", "location_indicator")
+
+portugal_efrdesf1 <- portugal_efrdesf1 %>% 
+  mutate(country_name="portugal",
+         country_id=63,
+         fund="efrd",
+         start_date=ymd(start_date),
+         end_date=ymd(end_date),
+         eu_cofinancing_rate=total_EU_expenditure/total) %>% 
+  select(-total)
+
+portugal_efrdesf1 <- portugal_efrdesf1 %>% 
+  left_join(LAU_portugal, by="location_indicator") %>% 
+  select(-lau1, -lau2, -lau3, -lau4, -lau5, -lau6) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau1")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau2, -lau3, -lau4, -lau5, -lau6, -location_indicator.y, -nuts_2.x) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau2")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau1, -lau3, -lau4, -lau5, -lau6, -location_indicator.y, -nuts_2.x) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau3")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau1, -lau2, -lau4, -lau5, -lau6, -location_indicator.y, -nuts_2.x) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau4")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau1, -lau2, -lau3, -lau5, -lau6, -location_indicator.y, -nuts_2.x) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau5")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau1, -lau2, -lau3, -lau4, -lau6, -location_indicator.y, -nuts_2.x) %>% 
+  left_join(LAU_portugal, by=c("location_indicator"= "lau6")) %>% 
+  mutate(nuts_2=nuts_2.x) %>% 
+  select( -lau1, -lau2, -lau3, -lau4, -lau5, -location_indicator.y, -nuts_2.x) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y)==FALSE ~nuts_2.y,
+                          TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y.y)==FALSE ~nuts_2.y.y,
+                          TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y.y.y)==FALSE ~nuts_2.y.y.y,
+                          TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y.y.y.y)==FALSE ~nuts_2.y.y.y.y,
+                          TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y.y.y.y.y)==FALSE ~nuts_2.y.y.y.y.y,
+                          TRUE~nuts_2)) %>% 
+  mutate(nuts_2=case_when(is.na(nuts_2)==TRUE & is.na(nuts_2.y.y.y.y.y.y)==FALSE ~nuts_2.y.y.y.y.y.y,
+                          TRUE~nuts_2)) %>% 
+  select(-nuts_2.y.y.y.y.y.y, -nuts_2.y.y.y.y.y, -nuts_2.y.y.y.y, -nuts_2.y.y.y, -nuts_2.y.y, -nuts_2.y) %>% 
+  mutate(nuts_2=case_when(location_indicator=="Abrantes"~"PT16",
+                          location_indicator=="Alandroal"~"PT18",
+                          location_indicator=="Alcácer do Sal"~"PT18",
+                          location_indicator=="Alenquer"~"PT16",
+                          location_indicator=="Amadora"~"PT17",
+                          location_indicator=="Amarante"~"PT11",
+                          location_indicator=="Anadia"~"PT16",
+                          location_indicator=="Arcos de Valdevez"~"PT18",
+                          location_indicator=="Arronches"~"PT18",
+                          location_indicator=="Aveiro"~"PT16",
+                          location_indicator=="Baião"~"PT11",
+                          location_indicator=="Beja"~"PT18",
+                          location_indicator=="Bombarral"~"PT16",
+                          location_indicator=="Borba"~"PT18",
+                          location_indicator=="Braga"~"PT11",
+                          location_indicator=="Bragança"~"PT11",
+                          location_indicator=="Cadaval"~"PT16",
+                          location_indicator=="Caldas da Rainha"~"PT16",
+                          location_indicator=="Caminha"~"PT11",
+                          location_indicator=="Campo Maior"~"PT18",
+                          location_indicator=="Cartaxo"~"PT18",
+                          location_indicator=="Castelo de Paiva"~"PT11",
+                          location_indicator=="Castelo de Vide"~"PT18",
+                          location_indicator=="Celorico da Beira"~"PT16",
+                          location_indicator=="Celorico de Basto"~"PT11",
+                          location_indicator=="Chamusca"~"PT18",
+                          location_indicator=="Chaves"~"PT11",
+                          location_indicator=="Coimbra"~"PT16",
+                          location_indicator=="Elvas"~"PT18",
+                          location_indicator=="Entroncamento"~"PT16",
+                          location_indicator=="Estarreja"~"PT16",
+                          location_indicator=="Estremoz"~"PT18",
+                          location_indicator=="Évora"~"PT18",
+                          location_indicator=="Faro"~"PT15",
+                          location_indicator=="Figueira da Foz"~"PT16",
+                          location_indicator=="Guimarães"~"PT11",
+                          location_indicator=="Ílhavo"~"PT16",
+                          location_indicator=="Lagos"~"PT15",
+                          location_indicator=="Lamego"~"PT11",
+                          location_indicator=="Lisboa"~"PT17",
+                          location_indicator=="Loulé"~"PT15",
+                          location_indicator=="Lousada"~"PT11",
+                          location_indicator=="Manteigas"~"PT16",
+                          location_indicator=="Marco de Canaveses"~"PT11",
+                          location_indicator=="Marvão"~"PT18",
+                          location_indicator=="Mealhada"~"PT16",
+                          location_indicator=="Melgaço"~"PT11",
+                          location_indicator=="Mondim de Basto"~"PT11",
+                          location_indicator=="Montemor-o-Novo"~"PT18",
+                          location_indicator=="Moura"~"PT18",
+                          location_indicator=="Nisa"~"PT18",
+                          location_indicator=="Óbidos"~"PT16",
+                          location_indicator=="Odemira"~"PT18",
+                          location_indicator=="Ourém"~"PT16",
+                          location_indicator=="Penalva do Castelo"~"PT16",
+                          location_indicator=="Penela"~"PT16",
+                          location_indicator=="Portalegre"~"PT18",
+                          location_indicator=="Porto"~"PT11",
+                          location_indicator=="Porto de Mós"~"PT16",
+                          location_indicator=="Póvoa de Lanhoso"~"PT11",
+                          location_indicator=="Póvoa de Varzim"~"PT11",
+                          location_indicator=="Ribeira de Pena"~"PT11",
+                          location_indicator=="Sabugal"~"PT16",
+                          location_indicator=="Santa Marta de Penaguião"~"PT11",
+                          location_indicator=="Santarém"~"PT17",
+                          location_indicator=="Serpa"~"PT18",
+                          location_indicator=="Sesimbra"~"PT17",
+                          location_indicator=="Setúbal"~"PT17",
+                          location_indicator=="Sintra"~"PT17",
+                          location_indicator=="Tavira"~"PT15",
+                          location_indicator=="Terras de Bouro"~"PT11",
+                          location_indicator=="Tomar"~"PT16",
+                          location_indicator=="Torres Novas"~"PT16",
+                          location_indicator=="Torres Vedras"~"PT16",
+                          location_indicator=="Trancoso"~"PT16",
+                          location_indicator=="Vale de Cambra"~"PT11",
+                          location_indicator=="Viana do Castelo"~"PT11",
+                          location_indicator=="Vila Nova de Gaia"~"PT11",
+                          location_indicator=="Vila Nova de Poiares"~"PT16",
+                          location_indicator=="Vila Viçosa"~"PT18",
+                          location_indicator=="Vizela"~"PT11",
+                          TRUE~nuts_2))
+
+test <- portugal_efrdesf1 %>% 
+  filter(is.na(nuts_2))
+
+funds <- funds %>% 
+  bind_rows(portugal_efrdesf1)
+
+
+portugal_efrdesf2 <- portugal_efrdesf2 %>% 
+  filter(total_EU_expenditure!=0) %>% 
+  select(-total) %>% 
+  mutate(country_name="portugal",
+         country_id=63)
+
+funds <- funds %>% 
+  bind_rows(portugal_efrdesf2)
+
 
 #Romania####
 romania_esfefrd <- read_csv2("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/ro_2022-10-19.csv", locale = locale(encoding = "ISO-8859-1"))
@@ -1803,6 +1962,7 @@ funds <- funds %>%
   bind_rows(romania_esfefrd)
 
 #Slovakia####
+
 slovakia_esfefrd <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/slovakia_2022-08-12.csv", col_types = cols(.default="?", `Príspevok Únie / Expeditures allocated to the selected operation - Union support`="character"))
 
 postal_code_slovakia  <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/Nuts-Postal code/pc2020_SK_NUTS-2021_v2.0.csv"))
