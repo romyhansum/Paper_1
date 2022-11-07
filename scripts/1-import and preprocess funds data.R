@@ -1419,6 +1419,139 @@ funds <- funds %>%
 
 
 #Hungary####
+##überprüfen, ob weitere Dateien hinzugekommen- diese müssen bei bind_row gelistet werden.
+##überprüfen, ob bei EFOP weiterhin nur de facto nationale Vorhaben.
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/EFOP")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+efop <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`)
+remove(list=ls(pattern="export.*"))
+
+efop <- efop %>% 
+  select(c(2, 10, 11, 12, 13, 15, 16, 17, 19, 22, 23))
+
+colnames(efop) <- c("eu_cofinancing_rate", "priority_axis", "beneficiary","operation_name","location_indicator",  "operation_summary", 
+                      "total_EU_expenditure", "fund", "category_of_intervention","start_date", "end_date")
+efop <- efop %>% 
+  mutate(eu_cofinancing_rate=eu_cofinancing_rate/100,
+         country_name="hungary",
+         country_id=39,
+         fund=case_when(fund=="ERFA"~"efrd",
+                        fund=="ESZA"~"esf"),
+         nuts_2="higher NUTS")
+         
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU12")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop12 <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`, `export(3).csv`, `export(4).csv`, `export(5).csv`, `export(6).csv`, 
+                   `export(7).csv`, `export(8).csv`, `export(9).csv`, `export(10).csv`, `export(11).csv`, `export(12).csv`, 
+                   `export(13).csv`, `export(14).csv`, `export(15).csv`, `export(16).csv`, `export(17).csv`)%>% 
+  mutate(nuts_2="HU12")
+
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU21")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop21 <- as_tibble(export.csv)%>% 
+  mutate(nuts_2="HU21")
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU22")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop22 <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`, `export(3).csv`, `export(4).csv`, `export(5).csv`, `export(6).csv`, 
+                     `export(7).csv`, `export(8).csv`, `export(9).csv`, `export(10).csv`, `export(11).csv`, `export(12).csv`, 
+                     `export(13).csv`)%>% 
+  mutate(nuts_2="HU22")
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU23")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop23 <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`, `export(3).csv`, `export(4).csv`, `export(5).csv`, `export(6).csv`, 
+                     `export(7).csv`, `export(8).csv`, `export(9).csv`, `export(10).csv`, `export(11).csv`, `export(12).csv`, 
+                     `export(13).csv`, `export(14).csv`, `export(15).csv`, `export(16).csv`, `export(17).csv`, `export(18).csv`)%>% 
+  mutate(nuts_2="HU23")
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU31")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop31 <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`, `export(3).csv`, `export(4).csv`, `export(5).csv`, `export(6).csv`, 
+                     `export(7).csv`, `export(8).csv`, `export(9).csv`, `export(10).csv`, `export(11).csv`, `export(12).csv`, 
+                     `export(13).csv`, `export(14).csv`, `export(15).csv`, `export(16).csv`, `export(17).csv`, `export(18).csv`, `export(19).csv`)%>% 
+  mutate(nuts_2="HU31")
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU32")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop32 <- export.csv%>% 
+  mutate(nuts_2="HU32")
+remove(list=ls(pattern="export.*"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP/HU33")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop33 <- bind_rows(export.csv, `export(1).csv`, `export(2).csv`, `export(3).csv`, `export(4).csv`, `export(5).csv`, `export(6).csv`, 
+                     `export(7).csv`, `export(8).csv`, `export(9).csv`, `export(10).csv`, `export(11).csv`, `export(12).csv`, 
+                     `export(13).csv`, `export(14).csv`, `export(15).csv`, `export(16).csv`, `export(17).csv`, `export(18).csv`, `export(19).csv`,
+                     `export(20).csv`, `export(21).csv`, `export(22).csv`, `export(23).csv`, `export(24).csv`, `export(25).csv`)%>% 
+  mutate(nuts_2="HU33")
+remove(list=ls(pattern="export.*"))
+
+ginop <- bind_rows(ginop12, ginop21, ginop22, ginop23, ginop31, ginop32, ginop33)
+remove(list=ls(pattern="ginop\\d+"))
+
+setwd("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/hungary/GINOP")
+temp = list.files(pattern="*.csv")
+for (i in 1:length(temp)) assign(temp[i], read.csv2(temp[i]))
+ginop1 <- bind_rows(export.csv, `export(1).csv`) %>% 
+  mutate(nuts_2="higher NUTS")
+
+remove(list=ls(pattern="export.*"))
+
+remove(i)
+remove(temp)
+setwd("C:/Users/RomyH/Documents/PhD/PhD project/data & scripts/Paper_1_R")
+
+ginop <- ginop %>% 
+  select(c(1,2, 4, 5, 7, 8, 10, 11, 12, 13, 14))
+
+colnames(ginop) <- c("beneficiary","operation_name", "priority_axis", "location_indicator", "operation_summary", "total_EU_expenditure",
+                     "category_of_intervention", "eu_cofinancing_rate","start_date", "end_date", "nuts_2")
+
+ginop1 <- ginop1 %>% 
+  select(c(2, 10, 11, 12, 13, 15, 16, 19, 22, 23, 24))
+colnames(ginop1) <- c("eu_cofinancing_rate", "priority_axis", "beneficiary","operation_name","location_indicator",  "operation_summary", 
+                      "total_EU_expenditure", "category_of_intervention","start_date", "end_date", "nuts_2")
+ginop1 <- ginop1 %>% 
+  mutate(eu_cofinancing_rate=eu_cofinancing_rate/100)
+
+ginop11 <- data.frame(NA, NA, "GINOP-9.1.1-21 Kamatmentes Újraindítási Gyorskölcsön Hitelprogram", NA, NA, 45470301530, NA, 1, NA, NA, "HU11")
+colnames(ginop11) <- c("beneficiary","operation_name", "priority_axis", "location_indicator", "operation_summary", "total_EU_expenditure",
+                     "category_of_intervention", "eu_cofinancing_rate","start_date", "end_date", "nuts_2")
+
+ginop <- bind_rows(ginop, ginop1, ginop11)
+
+remove(ginop1, ginop11)
+
+ginop <- ginop %>% 
+  mutate(country_name="hungary",
+         country_id=39,
+         fund="efrd")
+
+hungary_esfefrd <- bind_rows(ginop, efop)
+hungary_esfefrd <- hungary_esfefrd %>% 
+  mutate(total_EU_expenditure=total_EU_expenditure/400.03, #amount is indicated in HUF (exchange rate:1/400,03)
+         start_date=ymd(start_date),
+         end_date=ymd(end_date))
+
+funds <- funds %>% 
+  bind_rows(hungary_esfefrd)
+
 #Ireland####
 ##noch weitere Begünstige hinzugekommen? Ggf. location_indicator und Daten ändern.
 ireland_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/ireland_2021-12-03-ESF.xlsx", skip=4)
