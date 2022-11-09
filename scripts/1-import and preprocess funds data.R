@@ -40,8 +40,9 @@ austria_efrd <- austria_efrd %>%
                           location1=="7"~"AT33",
                           location1=="8"~"AT34",
                           location1=="9"~"AT13")) %>% 
-  mutate(nuts_2=case_when(location_indicator=="130 - WIEN (NUTS)"~"AT13",
+  mutate(nuts_2=case_when(location_indicator=="130 - WIEN (NUTS)" & beneficiary!="Kommunalkredit Public Consulting GmbH"~"AT13",
                           location_indicator=="131 - Wien (NUTS)"~"AT13",
+                          beneficiary=="Kommunalkredit Public Consulting GmbH"~"higher NUTS",
                           TRUE~nuts_2)) %>% 
   select(-location1)
 
@@ -167,6 +168,7 @@ funds <- funds %>%
 
 bulgaria_efrd2 <- bulgaria_efrd2 %>% 
   filter(!is.na(total_EU_expenditure)) %>% 
+  filter(total_EU_expenditure!=0) %>% 
   mutate(eu_cofinancing_rate=total_EU_expenditure/total_budget,
          total_EU_expenditure=total_EU_expenditure/1.955, #amount is indicated in BGN (exchange rate as specified in list of project:1/1,955)
          country_name="bulgaria",
@@ -864,6 +866,9 @@ czechia_efrd1 <- czechia_efrd1 %>%
 missing_beneficiaries <- czechia_efrd1 %>%
   filter(nuts_2=="missing")
 
+mean_cofinancing_rate <- czechia_efrd1 %>% 
+  summarise(mean_cofi=mean(eu_cofinancing_rate))
+
 czechia_efrd2 <- czechia_efrd2 %>% 
   select(-Téma, -`Registrační číslo projektu`, -`Název stavu`, -`Název výzvy`)
 
@@ -877,6 +882,7 @@ czechia_efrd2 <- czechia_efrd2 %>%
          country_id=68,
          fund="efrd") %>% 
   mutate(total_EU_expenditure=total_EU_expenditure/25, #amount indicated is in czk (exchange rate: 1/25).
+         eu_cofinancing_rate=(mean_cofinancing_rate$mean_cofi), #no information, thus the overall average rate is used.
          nuts_2=case_when(beneficiary=="Krajské ředitelství policie Jihomoravského kraje"~"CZ06",
                           beneficiary=="Moravskoslezský kraj"~"CZ08",
                           beneficiary=="Fakultní nemocnice Plzeň"~"CZ03",
@@ -1112,7 +1118,7 @@ finland_esf14 <- finland_esf14 %>%
   mutate(nuts_2="FI1D")
 finland_esf15 <- finland_esf15 %>% 
   mutate(nuts_2="FI1D")
-finland_efrd16 <- finland_esf16 %>% 
+finland_esf16 <- finland_esf16 %>% 
   mutate(nuts_2="FI19")
 finland_esf17 <- finland_esf17 %>% 
   mutate(nuts_2="FI1B")
@@ -1312,7 +1318,7 @@ germany_esf <- germany_esf %>%
          country_id=54,
          fund="esf",
          eu_cofinancing_rate=str_replace_all(eu_cofinancing_rate, ",", "."),        
-         eu_cofinancing_rate=(as.numeric(eu_cofinancing_rate))/100,
+         eu_cofinancing_rate=1-(as.numeric(eu_cofinancing_rate))/100,
          total=str_replace_all(total, "\\.",""),
          start_date=dmy(start_date),
          end_date=dmy(end_date)) %>% 
@@ -1320,6 +1326,9 @@ germany_esf <- germany_esf %>%
   mutate(total=as.numeric(total)) %>% 
   mutate(total_EU_expenditure=total,
          nuts_2=str_extract(location_indicator, "DE[:alnum:]{2}")) %>% 
+  mutate(nuts_2=case_when(operation_name=="MKFD_REACT"~"higher NUTS",
+                          operation_name=="Mikromezzaninfonds REACT-EU"~"higher NUTS",
+                          TRUE~nuts_2)) %>% 
   select(-total)
 
 funds <- funds %>% 
@@ -1684,12 +1693,12 @@ postal_code_netherlands <- postal_code_netherlands %>%
 
 
 netherlands_efrd <- netherlands_efrd %>% 
-  select(-`Project ID`, -`Titel van het project in het Engels`,-Autoriteit, -`Website project`,-`Overige publieke financiering`,-`Overige private financiering`,-`Totale kosten in Euro's`, -`Categorie Steunverlening`,
+  select(-`Project ID`, -`Titel van het project in het Engels`,-Autoriteit, -`Website project`,-`Overige publieke financiering`,-`Overige private financiering`,-`Categorie Steunverlening`,
          -`Straatnaam`, -`Huisnummer`, -Land, -`Datum van laatste bijwerking`, -`Medebegunstigde 1`, -`Medebegunstigde 2`, -`Medebegunstigde 3`, -`Medebegunstigde 4`, -`Medebegunstigde 5`, -`Medebegunstigde 6`,
          -`Medebegunstigde 7`, -`Medebegunstigde 8`, -`Medebegunstigde 9`, -`Medebegunstigde 10`)
 
 
-colnames(netherlands_efrd) <- c("beneficiary", "operation_name", "fund", "operation_summary","total_EU_expenditure", "eu_cofinancing_rate","postal_code", "region", "start_date", "end_date", "thematic_ojc")
+colnames(netherlands_efrd) <- c("beneficiary", "operation_name", "fund", "operation_summary","total_EU_expenditure", "total", "eu_cofinancing_rate","postal_code", "region", "start_date", "end_date", "thematic_ojc")
 
   
 netherlands_efrd <- netherlands_efrd %>% 
@@ -1702,7 +1711,12 @@ netherlands_efrd <- netherlands_efrd %>%
          total_EU_expenditure=str_replace(total_EU_expenditure, "€", ""),
          total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.", ""),
          total_EU_expenditure=as.numeric(total_EU_expenditure),
+         total=str_replace(total, "€", ""),
+         total=str_replace_all(total, "\\.", ""),
+         total=as.numeric(total),
          eu_cofinancing_rate=eu_cofinancing_rate/100) %>% 
+  mutate(eu_cofinancing_rate=case_when(is.na(eu_cofinancing_rate)~total_EU_expenditure/total,
+                                       TRUE~eu_cofinancing_rate)) %>% 
   left_join(postal_code_netherlands, by="postal_code") %>% 
   select(-NUTS3, -CODE) %>%
   mutate(nuts_2=case_when(is.na(nuts_2) & region=="Drenthe"~"NL13",
@@ -1725,7 +1739,11 @@ netherlands_efrd <- netherlands_efrd %>%
                           is.na(nuts_2) & beneficiary=="Aletta Jacobs School of Public Health"~"NL11",
                           TRUE~nuts_2),
          location_indicator=postal_code) %>% 
-  select(-thematic_ojc, -region, -postal_code)
+  select(-thematic_ojc, -region, -postal_code, -total) 
+
+mean_cofinancing_rate <- netherlands_efrd %>% 
+  filter(!is.na(eu_cofinancing_rate)) %>% 
+  summarise(mean_cofi=mean(eu_cofinancing_rate))
 
 funds <- funds %>% 
   bind_rows(netherlands_efrd)
@@ -2106,13 +2124,12 @@ postal_code_slovakia  <- postal_code_slovakia %>%
   mutate(location_indicator=as.numeric(location_indicator))
 
 slovakia_esfefrd <- slovakia_esfefrd %>% 
-  select(-`IČO / Identification number of the beneficiary`, -`Ulica / Street`, -`Číslo / Number`, -`Zemepisná šírka / Latitude`, -`Zemepisná dĺžka / Longitude`,
-         -`Celkové nárokovateľné výdaje pridelené na projekt / Total eligible expenditure allocated to the selected operation`, -`Vytvorené`,
+  select(-`IČO / Identification number of the beneficiary`, -`Ulica / Street`, -`Číslo / Number`, -`Zemepisná šírka / Latitude`, -`Zemepisná dĺžka / Longitude`, -`Vytvorené`,
          -`Verejné zdroje / Expeditures allocated to the selected operation - national public funding`, -`Vlastné zdroje / Expeditures allocated to the selected operation - national private funding`,
          -`Dátum poslednej aktualizácie / Date of last update of the list of operations`, -`Stav / Status of the operation`)
 
 colnames(slovakia_esfefrd) <- c("programme", "priority_axis","operation_name", "operation_summary","beneficiary", "location_indicator","start_date", "end_date",
-                                "places_of_project", "category_of_intervention", "fund", "eu_cofinancing_rate", "total_EU_expenditure")
+                                "places_of_project", "category_of_intervention", "fund", "eu_cofinancing_rate", "total", "total_EU_expenditure")
 
 slovakia_esfefrd <- slovakia_esfefrd %>% 
   filter(programme=="Integrovaný regionálny operačný program" | programme=="Operačný program Efektívna verejná správa" | programme=="Operačný program Ľudské zdroje") %>% 
@@ -2123,13 +2140,25 @@ slovakia_esfefrd <- slovakia_esfefrd %>%
                         fund=="Európsky fond regionálneho rozvoja"~"efrd"),
          start_date=dmy(start_date),
          end_date=dmy(end_date),
-         total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.(?=[:digit:]{1,2}$)", "\\,")) %>% 
-  mutate(total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\.", "")) %>% 
-  mutate(total_EU_expenditure=str_replace_all(total_EU_expenditure, "\\,", "\\.")) %>% 
-  mutate(total_EU_expenditure=as.numeric(total_EU_expenditure)) %>% 
+         total_EU_expenditure=eu_cofinancing_rate*total) %>% 
   left_join(postal_code_slovakia, by="location_indicator") %>% 
   select(-NUTS3, -CODE, -programme, -places_of_project) %>% 
-  mutate(location_indicator=as.character(location_indicator))
+  mutate(nuts_2=case_when(is.na(nuts_2) & location_indicator==4079 ~"SK04",
+                          is.na(nuts_2) & location_indicator==5080 ~"SK03",
+                          is.na(nuts_2) & location_indicator==6680 ~"SK04",
+                          is.na(nuts_2) & location_indicator==7525 ~"SK04",
+                          is.na(nuts_2) & location_indicator==7671 ~"SK04",
+                          is.na(nuts_2) & location_indicator==81241 ~"SK01",
+                          is.na(nuts_2) & location_indicator==81267 ~"multiple NUTS",
+                          is.na(nuts_2) & location_indicator==90214 ~"SK01",
+                          is.na(nuts_2) & location_indicator==90525 ~"SK02",
+                          is.na(nuts_2) & location_indicator==91771 ~"SK02",
+                          is.na(nuts_2) & location_indicator==93005 ~"SK02",
+                          str_detect(beneficiary, "Ministerstvo")~"higher NUTS",
+                          beneficiary=="Štátny fond rozvoja bývania"~"higher NUTS",
+                          TRUE~nuts_2)) %>% 
+  mutate(location_indicator=as.character(location_indicator)) %>% 
+  select(-total)
 
 funds <- funds %>% 
   bind_rows(slovakia_esfefrd)
@@ -2158,6 +2187,7 @@ slovenia_esfefrd<- slovenia_esfefrd %>%
                           total_EU_expenditure==EasternSlovenia~"SI03",
                           total_EU_expenditure==WesternSlovenia~"SI04",
                           TRUE~"multiple NUTS")) %>% 
+  mutate(eu_cofinancing_rate=1) %>% 
   select(-eu_cofinancing_rate1, -eu_cofinancing_rate2, -eu_cofinancing_rate3, -EasternSlovenia, -WesternSlovenia, -wholeSlovenia)
 
 
@@ -2308,4 +2338,14 @@ write_csv(funds, file.path("./data/processed/","REACT-EU-funds.csv"))
 
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
 
+funds_aggregated <- funds %>% 
+  group_by(nuts_2, country_name, country_id, number_of_projects) %>% 
+  summarize(sum_EU_means=sum(total_EU_expenditure),
+            mean_cofinancing_rate=mean(eu_cofinancing_rate),
+            frequency1=n())
 
+funds_aggregated <- funds_aggregated %>% 
+  mutate(number_of_projects=as.integer(number_of_projects)) %>% 
+  mutate(number_of_projects=case_when(is.na(number_of_projects)~frequency1,
+                                      TRUE~number_of_projects)) %>% 
+  select(-frequency1)
