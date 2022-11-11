@@ -28,4 +28,20 @@ op_react_aggregated <- op_react %>%
             total_expenditure_selected=sum(total_expenditure_selected),
             total_expenditure_spent=sum(total_expenditure_spent))
 
-write_csv(op_react_aggregated, file.path("./data/processed/","op_react_aggregated.csv")
+op_react_aggregated <- op_react_aggregated %>% 
+  mutate(counted_twice="no")
+
+#Austria has allocated certain budget shares of a national operational programme to regions.
+#This distribution can be studied like regional operational programmes.
+#However, when studying the total budget, these regional allocations have to be neglected (otherwise they are counted twice).
+
+op_react_austria <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/fundsvar/data_ESI-funds.xlsx", sheet="Countryoverview_Austria_11_22")
+
+op_react_austria <- op_react_austria %>% 
+  mutate(counted_twice="yes") %>% 
+  select(-ms, -region, -nuts_equivalent)
+
+op_react_aggregated <- op_react_aggregated %>% 
+  bind_rows(op_react_austria)
+
+write_csv(op_react_aggregated, file.path("./data/processed/op_react_aggregated.csv"))
