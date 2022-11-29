@@ -23,6 +23,7 @@ vote_nuts2_all <- vote_nuts2_all %>%
   mutate(nuts2=case_when(nutslevel==2 & country!= "Spain" ~nuts2016, #For Spain some regions are indicated as nuts 2 level, however their code is actually nuts 3.
                          nutslevel==2 & country=="Spain" ~ str_extract(nuts2016, "\\w{2}[:alnum:]{2}"),
                          nutslevel==3~str_extract(nuts2016, "\\w{2}[:alnum:]{2}"),
+                         country=="Slovenia" ~"SI00", #in EU-NED data, only nuts0 level available.
                          TRUE~"NA"),
          regionname2=case_when(nutslevel==2~regionname,
                                nutslevel==3~"",
@@ -43,6 +44,17 @@ vote_nuts2_all <- vote_nuts2_all %>%
                                  partyfacts_id==5657 ~75,
                                  partyfacts_id==7619 ~1704,
                                  partyfacts_id==7421 ~4795,
+                                 partyfacts_id==1731 ~211, #CDU and CSU are coded together as "CDU+CSU" in Parlgov.
+                                 partyfacts_id==1375 ~211, #CDU and CSU are coded together as "CDU+CSU" in Parlgov.
+                                 partyfacts_id==6366 ~1691, #Fidesz and KDNP are coded separately in Parlgov.
+                                 partyfacts_id==21 ~1490, #Lithuanian Peasant party was merged in the Lithuanian Farmers and Greens Union already in 2001.
+                                 partyfacts_id==64 ~7352, #Lithuanian Social Democratic Party was differently coded.
+                                 partyfacts_id==756 ~622, #Belgian Flemish Christian Peoples Party | Christian Democrats & Flemish was differently coded.
+                                 party_abbreviation=="MDM" ~ 213, #French Party "MODEM" lacks partyfacts ID in EU-NED.
+                                 party_abbreviation=="ZA LUDI" ~ 8394, #Slovak Party "For the people" lacks partyfacts ID in EU-NED.
+                                 party_abbreviation=="ECP-GUANYEM EL CANVI" ~ 8031, #Spanish Party "En Comú Podem" lacks partyfacts ID in EU-NED.
+                                 party_abbreviation=="PODEMOS-EU" ~ 3203, #Spanish Party "PODEMOS" lacks partyfacts ID in EU-NED.
+                                 party_abbreviation=="PODEMOS-IU" ~ 3203, #Spanish Party "PODEMOS" lacks partyfacts ID in EU-NED.
                                  TRUE~partyfacts_id))
 
 #2. Get ParlGov Party ID through Partyfacts ID.####
@@ -71,6 +83,111 @@ vote_nuts2_all <-  vote_nuts2_all %>%
             valid_vote=sum(validvote)) %>% 
   ungroup()
 
+vote_nuts2_all <- vote_nuts2_all %>% #For France and some regions in Spain and Romania, added numbers for electorate etc. need to be corrected as not every party exists in every nuts2 unit.
+  mutate(electorate=case_when(country=="France" & year=="2017" & nuts2=="FR10" ~ 7199479,
+                              country=="France" & year=="2017" & nuts2=="FRB0" ~ 1827716,
+                              country=="France" & year=="2017" & nuts2=="FRC1" ~ 1168242,
+                              country=="France" & year=="2017" & nuts2=="FRC2" ~ 833145,
+                              country=="France" & year=="2017" & nuts2=="FRD1" ~ 1088567,
+                              country=="France" & year=="2017" & nuts2=="FRD2" ~ 1308363,
+                              country=="France" & year=="2017" & nuts2=="FRE1" ~ 2895813,
+                              country=="France" & year=="2017" & nuts2=="FRE2" ~ 1347196,
+                              country=="France" & year=="2017" & nuts2=="FRF1" ~ 1293448,
+                              country=="France" & year=="2017" & nuts2=="FRF2" ~ 913771,
+                              country=="France" & year=="2017" & nuts2=="FRF3" ~ 1665811,
+                              country=="France" & year=="2017" & nuts2=="FRG0" ~ 2706546,
+                              country=="France" & year=="2017" & nuts2=="FRH0" ~ 2453666,
+                              country=="France" & year=="2017" & nuts2=="FRI1" ~ 2453490,
+                              country=="France" & year=="2017" & nuts2=="FRI2" ~ 543422,
+                              country=="France" & year=="2017" & nuts2=="FRI3" ~ 1330143,
+                              country=="France" & year=="2017" & nuts2=="FRJ1" ~ 2017965,
+                              country=="France" & year=="2017" & nuts2=="FRJ2" ~ 2168575,
+                              country=="France" & year=="2017" & nuts2=="FRK1" ~ 1009061,
+                              country=="France" & year=="2017" & nuts2=="FRK2" ~ 4406633,
+                              country=="France" & year=="2017" & nuts2=="FRL0" ~ 3566117,
+                              country=="France" & year=="2017" & nuts2=="FRM0" ~ 233532,
+                              country=="France" & year=="2017" & nuts2=="FRY1" ~ 316217,
+                              country=="France" & year=="2017" & nuts2=="FRY2" ~ 310233,
+                              country=="France" & year=="2017" & nuts2=="FRY3" ~ 93078,
+                              country=="France" & year=="2017" & nuts2=="FRY4" ~ 640367,
+                              country=="France" & year=="2017" & nuts2=="FRY5" ~ 82802,
+                              country=="Spain" & year=="2019" & nuts2=="ES11" ~ 2698698,
+                              country=="Romania" & year=="2020" & nuts2=="RO12" ~ 2130641,
+                              country=="Romania" & year=="2020" & nuts2=="RO21" ~ 3241811,
+                              country=="Romania" & year=="2020" & nuts2=="RO41" ~ 1776124,
+                              TRUE~electorate))
+
+vote_nuts2_all <- vote_nuts2_all %>% #For France, added numbers for electorate etc. need to be corrected as not every party exists in every nuts2 unit.
+  mutate(total_vote=case_when(country=="France" & year=="2017" & nuts2=="FR10" ~ 3570172,
+                              country=="France" & year=="2017" & nuts2=="FRB0" ~ 931050,
+                              country=="France" & year=="2017" & nuts2=="FRC1" ~ 591174,
+                              country=="France" & year=="2017" & nuts2=="FRC2" ~ 428491,
+                              country=="France" & year=="2017" & nuts2=="FRD1" ~ 567787,
+                              country=="France" & year=="2017" & nuts2=="FRD2" ~ 652301,
+                              country=="France" & year=="2017" & nuts2=="FRE1" ~ 1369873,
+                              country=="France" & year=="2017" & nuts2=="FRE2" ~ 656465,
+                              country=="France" & year=="2017" & nuts2=="FRF1" ~ 603097,
+                              country=="France" & year=="2017" & nuts2=="FRF2" ~ 442560,
+                              country=="France" & year=="2017" & nuts2=="FRF3" ~ 763100,
+                              country=="France" & year=="2017" & nuts2=="FRG0" ~ 1431864,
+                              country=="France" & year=="2017" & nuts2=="FRH0" ~ 1366158,
+                              country=="France" & year=="2017" & nuts2=="FRI1" ~ 1304508,
+                              country=="France" & year=="2017" & nuts2=="FRI2" ~ 306268,
+                              country=="France" & year=="2017" & nuts2=="FRI3" ~ 675360,
+                              country=="France" & year=="2017" & nuts2=="FRJ1" ~ 997175,
+                              country=="France" & year=="2017" & nuts2=="FRJ2" ~ 1177181,
+                              country=="France" & year=="2017" & nuts2=="FRK1" ~ 530649,
+                              country=="France" & year=="2017" & nuts2=="FRK2" ~ 2154152,
+                              country=="France" & year=="2017" & nuts2=="FRL0" ~ 1677828,
+                              country=="France" & year=="2017" & nuts2=="FRM0" ~ 115221,
+                              country=="France" & year=="2017" & nuts2=="FRY1" ~ 80976,
+                              country=="France" & year=="2017" & nuts2=="FRY2" ~ 80905,
+                              country=="France" & year=="2017" & nuts2=="FRY3" ~ 23086,
+                              country=="France" & year=="2017" & nuts2=="FRY4" ~ 222112,
+                              country=="France" & year=="2017" & nuts2=="FRY5" ~ 36721,
+                              country=="Spain" & year=="2019" & nuts2=="ES11" ~ 1507366,
+                              country=="Romania" & year=="2020" & nuts2=="RO12" ~ 701413,
+                              country=="Romania" & year=="2020" & nuts2=="RO21" ~ 893706,
+                              country=="Romania" & year=="2020" & nuts2=="RO41" ~ 662112,
+                              TRUE~total_vote))
+
+vote_nuts2_all <- vote_nuts2_all %>% #For France, added numbers for electorate etc. need to be corrected as not every party exists in every nuts2 unit.
+  mutate(valid_vote=case_when(country=="France" & year=="2017" & nuts2=="FR10" ~ 3511021,
+                              country=="France" & year=="2017" & nuts2=="FRB0" ~ 909430,
+                              country=="France" & year=="2017" & nuts2=="FRC1" ~ 577898,
+                              country=="France" & year=="2017" & nuts2=="FRC2" ~ 417960,
+                              country=="France" & year=="2017" & nuts2=="FRD1" ~ 554807,
+                              country=="France" & year=="2017" & nuts2=="FRD2" ~ 636403,
+                              country=="France" & year=="2017" & nuts2=="FRE1" ~ 1337958,
+                              country=="France" & year=="2017" & nuts2=="FRE2" ~ 640748,
+                              country=="France" & year=="2017" & nuts2=="FRF1" ~ 591393,
+                              country=="France" & year=="2017" & nuts2=="FRF2" ~ 434304,
+                              country=="France" & year=="2017" & nuts2=="FRF3" ~ 745569,
+                              country=="France" & year=="2017" & nuts2=="FRG0" ~ 1399055,
+                              country=="France" & year=="2017" & nuts2=="FRH0" ~ 1338607,
+                              country=="France" & year=="2017" & nuts2=="FRI1" ~ 1274495,
+                              country=="France" & year=="2017" & nuts2=="FRI2" ~ 296796,
+                              country=="France" & year=="2017" & nuts2=="FRI3" ~ 659278,
+                              country=="France" & year=="2017" & nuts2=="FRJ1" ~ 971856,
+                              country=="France" & year=="2017" & nuts2=="FRJ2" ~ 1147565,
+                              country=="France" & year=="2017" & nuts2=="FRK1" ~ 518828,
+                              country=="France" & year=="2017" & nuts2=="FRK2" ~ 2119893,
+                              country=="France" & year=="2017" & nuts2=="FRL0" ~ 1644593,
+                              country=="France" & year=="2017" & nuts2=="FRM0" ~ 112494,
+                              country=="France" & year=="2017" & nuts2=="FRY1" ~ 74598,
+                              country=="France" & year=="2017" & nuts2=="FRY2" ~ 76168,
+                              country=="France" & year=="2017" & nuts2=="FRY3" ~ 21942,
+                              country=="France" & year=="2017" & nuts2=="FRY4" ~ 203122,
+                              country=="France" & year=="2017" & nuts2=="FRY5" ~ 32914,
+                              country=="Spain" & year=="2019" & nuts2=="ES11" ~ 1488107,
+                              country=="Romania" & year=="2020" & nuts2=="RO12" ~ 683187,
+                              country=="Romania" & year=="2020" & nuts2=="RO21" ~ 862419,
+                              country=="Romania" & year=="2020" & nuts2=="RO41" ~ 668920,
+                              TRUE~valid_vote))
+
+test<-vote_nuts2_all %>% 
+  filter(country=="France" & year=="2017")
+table(test$nuts2)
 
 vote_nuts2_all <- vote_nuts2_all %>% 
   mutate(turnout=total_vote/electorate,
@@ -78,7 +195,7 @@ vote_nuts2_all <- vote_nuts2_all %>%
          country=str_to_lower(country))
 
 vote_nuts2_all <- vote_nuts2_all %>% 
-  filter(is.na(election_date)) %>% 
+  filter(!((is.na(election_date)==FALSE & country=="netherlands")|(is.na(election_date)==FALSE & country=="bulgaria"))) %>% #filter out complementary data (would be only relevant if first half 2021 elections should be included) except the data for romania 2020.
   mutate(election_date=case_when(country=="austria" & year=="2019"~ymd("2019-09-29"),
                                  country=="belgium" & year=="2019"~ymd("2019-05-26"),
                                  country=="bulgaria" & year=="2017"~ymd("2017-03-26"),
@@ -228,5 +345,10 @@ vote_nuts2_2021 <- vote_nuts2_2021 %>%
                                          political_region_nuts_level=="irregular" ~ "ITH1/ITH2",
                                          country=="slovenia"~"SI",
                                          TRUE~"0"))
+
+test <- vote_nuts2_2021 %>% 
+  filter(country=="germany")
+
+table(test$party_id)
 
 write_csv(vote_nuts2_2021, file.path("./data/processed/","vote_nuts_2021.csv"))
