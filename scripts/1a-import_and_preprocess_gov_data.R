@@ -70,7 +70,7 @@ cabinet1 <- cabinet1 %>%
 library(readxl)
 regional_gov <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/politicalvar/data_politicalvariables.xlsx")
 regional_gov <- regional_gov %>%
-  select(-`in EU-NED`, -comments) %>%
+  select(-`in EU-NED`, -comments, -source, -level) %>%
   filter(election_level=="regional elections")
 
 library(haven)
@@ -184,19 +184,6 @@ cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
 
 cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
   mutate(election_date=ymd(election_date)) %>%
-  mutate(electionyearandone=(year(election_date)+1),
-         start_year=year(start_date)) %>%
-  mutate(firstyear_incumbent=case_when(cabinet_change==0 ~ electionyearandone,
-                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==0 & cabinetinelectionyear==TRUE ~ electionyearandone,
-                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==0 & cabinetinelectionyear==FALSE ~ start_year,
-                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==1 & (electionyearandone>start_year) ~ electionyearandone,
-                                       cabinet_change==1 & relevant_cabinet==1 & cabinet_change_withinyear==1 & (electionyearandone<=start_year) ~ start_year,
-                                       cabinet_change==1 & relevant_cabinet==0 ~ 0)) %>%
-  select(-relevant_cabinet, -counter, -number, -start_year, -cabinetinelectionyear, -cabinet_change_withinyear, -electionyearandone, -cabinet_change)
-
-
-cabinet_nat_and_reg <- cabinet_nat_and_reg %>%
-  mutate(election_date=ymd(election_date)) %>%
   mutate(electionyearandone=as.character((year(election_date)+1)),
          start_year=as.character(year(start_date))) %>%
   mutate(firstyear_incumbent=case_when(cabinet_change==0 ~ electionyearandone,
@@ -297,8 +284,41 @@ cabinet_nat_and_reg_20 <- cabinet_nat_and_reg %>%
   mutate(reference_year="2020") %>%
   select(-included_2020, -included_2021)
 
-cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_20 %>%
+cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_20 %>%
   bind_rows(cabinet_nat_and_reg_21)
+
+#Add political_region_nuts_level for all observations, to prepare the link with other data sets.
+cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_2021 %>% 
+  mutate(political_region_nuts_level=case_when(region=="national"~"0",
+                                               TRUE~political_region_nuts_level),
+         political_region_nuts=case_when(region=="national" & country_name=="austria"~"AT",
+                                         region=="national" & country_name=="belgium"~"BE",
+                                         region=="national" & country_name=="bulgaria"~"BG",
+                                         region=="national" & country_name=="croatia"~"HR",
+                                         region=="national" & country_name=="cyprus"~"CY",
+                                         region=="national" & country_name=="czech republic"~"CZ",
+                                         region=="national" & country_name=="denmark"~"DK",
+                                         region=="national" & country_name=="estonia"~"EE",
+                                         region=="national" & country_name=="finland"~"FI",
+                                         region=="national" & country_name=="france"~"FR",
+                                         region=="national" & country_name=="germany"~"DE",
+                                         region=="national" & country_name=="greece"~"EL",
+                                         region=="national" & country_name=="hungary"~"HU",
+                                         region=="national" & country_name=="ireland"~"IE",
+                                         region=="national" & country_name=="italy"~"IT",
+                                         region=="national" & country_name=="latvia"~"LV",
+                                         region=="national" & country_name=="lithuania"~"LT",
+                                         region=="national" & country_name=="luxembourg"~"LU",
+                                         region=="national" & country_name=="malta"~"MT",
+                                         region=="national" & country_name=="netherlands"~"NL",
+                                         region=="national" & country_name=="poland"~"PL",
+                                         region=="national" & country_name=="portugal"~"PT",
+                                         region=="national" & country_name=="romania"~"RO",
+                                         region=="national" & country_name=="slovakia"~"SK",
+                                         region=="national" & country_name=="slovenia"~"SI",
+                                         region=="national" & country_name=="spain"~"ES",
+                                         region=="national" & country_name=="sweden"~"SE",
+                                         TRUE~political_region_nuts))
 
 #Alignment between national and regional governments, where applicable.
 #Alignment1: Lower-level gvt. leader belongs to party in upper level gvt. coalition.
@@ -306,7 +326,7 @@ cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_20 %>%
 #Alignment3: Lower-level gvt. party belongs to party of upper-level gvt. leader.
 #Alignment==1 stands for aligned, alignment==0 stands for unaligned, alignment==99 for only national observations.
 
-cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_2122 %>%
+cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_2021 %>%
   mutate(alignment1= case_when((prime_min_party_regional %in% c(govparty1_national, govparty2_national, govparty3_national, govparty4_national, govparty5_national, govparty6_national, govparty7_national)) & (is.na(prime_min_party_regional)==FALSE) ~1,
                                !(prime_min_party_regional %in% c(govparty1_national, govparty2_national, govparty3_national, govparty4_national, govparty5_national, govparty6_national, govparty7_national)) & (is.na(prime_min_party_regional)==FALSE) ~0,
                                TRUE~99),
@@ -326,9 +346,8 @@ cabinet_nat_and_reg_2122 <- cabinet_nat_and_reg_2122 %>%
                               TRUE~alignment3))
 
 
-test1 <- cabinet_nat_and_reg_2122 %>%
+test1 <- cabinet_nat_and_reg_2021 %>%
 count(alignment2, alignment3)
 
 
-write_csv(regional_gov, file.path("./data/processed/","reg_and_nat_governments_2122.csv"))
-
+write_csv(cabinet_nat_and_reg_2021, file.path("./data/processed/","reg_and_nat_governments_2021.csv"))

@@ -19,6 +19,11 @@ op_react <- op_react %>%
          total_expenditure=Total_Amount_planned) %>% 
   select(-ms, -`total_eligible_cost_decided_(selected)`, -total_eligible_spending)
 
+op_react <- op_react %>% 
+  mutate(regionalisation=case_when(country_name=="italy" & political_level=="national" ~"No", #see notes: decision to not treat the distribution as regionalised one.
+                                   country_name=="poland" & political_level=="national" ~"No", #see notes: decision to not treat the distribution as regionalised one.
+                                   TRUE~regionalisation))
+
 op_react_aggregated <- op_react %>% 
   group_by(political_level, country_id, country_name, regionalisation) %>% 
   summarise(eu_cofinancing_rate=sum(total_EU_expenditure)/sum(total_expenditure),
