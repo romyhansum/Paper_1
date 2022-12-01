@@ -1,9 +1,8 @@
 #Link the different data sets on funds, operational programmes, votes and government composition into one dataset.
 
-# 1. Link aggregated REACT-EU budget from operational programmes to gov data.####
-
 library(tidyverse)
 
+# 1. Link aggregated REACT-EU budget from operational programmes to gov data.####
 reg_and_nat_governments_2021  <- read_csv("./data/processed/reg_and_nat_governments_2021.csv")
 op_react_aggregated  <- read_csv("./data/processed/op_react_aggregated.csv")
 
@@ -102,6 +101,22 @@ gov_vote_op_budget <- gov_vote_op_budget1 %>%
 write_csv(gov_vote_op_budget, file.path("./data/processed/gov_vote_op_budget.csv"))
 
 # 3. Link funds data to gov data.####
-rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)
+funds_aggregated  <- read_csv("./data/processed/REACT-EU-funds_aggregated.csv")
+gov_vote_op_budget  <- read_csv("./data/processed/gov_vote_op_budget.csv")
+
+funds_aggregated <- funds_aggregated %>% 
+  rename(country=country_name,
+         nuts2=nuts_2) %>% 
+  filter(nuts2!="higher NUTS") %>% 
+  filter(nuts2!="multiple NUTS")
+
+gov_vote_op_funds <- gov_vote_op_budget %>% 
+  left_join(funds_aggregated, by=c("nuts2", "country", "country_id"))
+
+write_csv(gov_vote_op_funds, file.path("./data/processed/gov_vote_op_funds.csv"))
 
 # 4. Link eurostat data to gov-funds-data####
+
+#für finalen Datensatz: nuts2 in nuts umbenennen
+
+rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)

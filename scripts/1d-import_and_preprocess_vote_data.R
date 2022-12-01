@@ -20,6 +20,21 @@ vote_nuts2_all <- bind_rows(vote_nuts2, vote_nuts2_complement)
 
 vote_nuts2_all <- vote_nuts2_all %>% 
   filter(country!="Norway" & country!="Switzerland" & country!="Turkey" & country!="United Kingdom") %>% 
+  mutate(nuts2016=case_when(nuts2016=="HR041" ~ "HR050", #NUTS-2021 version is used, Crotian codes were recoded.
+                            nuts2016=="HR042" ~ "HR065",
+                            nuts2016=="HR043" ~ "HR064",
+                            nuts2016=="HR044" ~ "HR062",
+                            nuts2016=="HR045" ~ "HR063",
+                            nuts2016=="HR046" ~ "HR061",
+                            nuts2016=="HR047" ~ "HR021",
+                            nuts2016=="HR048" ~ "HR022",
+                            nuts2016=="HR049" ~ "HR023",
+                            nuts2016=="HR04A" ~ "HR024",
+                            nuts2016=="HR04B" ~ "HR025",
+                            nuts2016=="HR04C" ~ "HR026",
+                            nuts2016=="HR04D" ~ "HR027",
+                            nuts2016=="HR04E" ~ "HR028",
+                            TRUE~nuts2016)) %>% 
   mutate(nuts2=case_when(nutslevel==2 & country!= "Spain" ~nuts2016, #For Spain some regions are indicated as nuts 2 level, however their code is actually nuts 3.
                          nutslevel==2 & country=="Spain" ~ str_extract(nuts2016, "\\w{2}[:alnum:]{2}"),
                          nutslevel==3~str_extract(nuts2016, "\\w{2}[:alnum:]{2}"),
@@ -55,7 +70,12 @@ vote_nuts2_all <- vote_nuts2_all %>%
                                  party_abbreviation=="ECP-GUANYEM EL CANVI" ~ 8031, #Spanish Party "En Comú Podem" lacks partyfacts ID in EU-NED.
                                  party_abbreviation=="PODEMOS-EU" ~ 3203, #Spanish Party "PODEMOS" lacks partyfacts ID in EU-NED.
                                  party_abbreviation=="PODEMOS-IU" ~ 3203, #Spanish Party "PODEMOS" lacks partyfacts ID in EU-NED.
-                                 TRUE~partyfacts_id))
+                                 TRUE~partyfacts_id)) %>% 
+  mutate(nutslevel=case_when(country=="France" & !nuts2 %in% c("FRY1", "FRY2", "FRY3", "FRY4", "FRY5") ~ 1, #For France, a mix of nuts1 and nuts2 level is needed to join it in later steps with other data sets.
+                             TRUE~nutslevel)) %>% 
+  mutate(nuts2=case_when(nutslevel==1 & country=="France" ~ str_extract(nuts2, "\\w{2}[:alnum:]{1}"),
+                         TRUE~nuts2))
+
 
 #2. Get ParlGov Party ID through Partyfacts ID.####
 
@@ -70,7 +90,7 @@ vote_nuts2_all <- vote_nuts2_all %>%
   rename(party_id=dataset_party_id) %>% 
   select(-partyfacts_id)
 
-# 3. Preprocess data - create sound variables: turnout and percentage vote share for each party + variables that are needed to join this data set to other data sets (election_date + reference_year).####
+# 3. Preprocess data - create variables that are needed to join this data set to other data sets (election_date + reference_year).####
 
 vote_nuts2_all <-  vote_nuts2_all %>% 
   mutate(regionname2=case_when(regionname2=="Las Palmas"~"",  #Despite having the nuts2 code in EU-NED, the name actually identifies the nuts3 level. This hinders the aggregation and thus is deleted.
@@ -184,10 +204,6 @@ vote_nuts2_all <- vote_nuts2_all %>% #For France, added numbers for electorate e
                               country=="Romania" & year=="2020" & nuts2=="RO21" ~ 862419,
                               country=="Romania" & year=="2020" & nuts2=="RO41" ~ 668920,
                               TRUE~valid_vote))
-
-test<-vote_nuts2_all %>% 
-  filter(country=="France" & year=="2017")
-table(test$nuts2)
 
 vote_nuts2_all <- vote_nuts2_all %>% 
   mutate(turnout=total_vote/electorate,
@@ -345,10 +361,5 @@ vote_nuts2_2021 <- vote_nuts2_2021 %>%
                                          political_region_nuts_level=="irregular" ~ "ITH1/ITH2",
                                          country=="slovenia"~"SI",
                                          TRUE~"0"))
-
-test <- vote_nuts2_2021 %>% 
-  filter(country=="germany")
-
-table(test$party_id)
 
 write_csv(vote_nuts2_2021, file.path("./data/processed/","vote_nuts_2021.csv"))

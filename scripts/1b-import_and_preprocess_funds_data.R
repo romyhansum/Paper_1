@@ -5,8 +5,6 @@ library(readxl)
 library(readr)
 library(data.table)
 
-reg_and_nat_governments_2122  <- read_csv("./data/processed/reg_and_nat_governments_2122.csv")
-
 #1. step: Import Excel/csv list of observations
 #2. step: Reshape the respective list of projects: Unify list of projects, so that every list contains: operation_name, beneficiary, operation_summary, start_date, end_date, 
 #total_EU_expenditure (in €), eu_cofinancing_rate, location_indicator, country_name, category_of_intervention, priority_axis and a NUTS-II indicator.
@@ -1163,6 +1161,7 @@ finland_aland <- finland_aland %>%
   mutate(country_name="finland",
          country_id=67,
          fund="esf/efrd",
+         nuts_2="FI20",
          eu_cofinancing_rate=str_replace(eu_cofinancing_rate, "[:punct:]", ""),
          eu_cofinancing_rate=as.numeric(eu_cofinancing_rate)/100,
          total=str_replace(total,"€", ""),
@@ -1209,7 +1208,7 @@ france_esf <- france_esf %>%
                           administrative_region=="Bourgogne"~"FRC",
                           administrative_region=="Bretagne"~"FRH",
                           administrative_region=="Centre"~"FRB",
-                          administrative_region=="Champagne-Ardenne"~"FR2",
+                          administrative_region=="Champagne-Ardenne"~"FRF",
                           administrative_region=="Franche-Comté"~"FRC",
                           administrative_region=="Ile-de-France"~"FR1",
                           administrative_region=="Limousin"~"FRI",
@@ -1629,6 +1628,7 @@ italy_esfefrd <- italy_esfefrd %>%
                           region=="EMILIA-ROMAGNA" ~"ITH5",
                           region=="FRIULI-VENEZIA GIULIA" ~"ITH4",
                           region=="LAZIO" ~"ITI4",
+                          region=="VALLE D'AOSTA" ~"ITC2",
                           region=="LIGURIA" ~"ITC3",
                           region=="LOMBARDIA" ~"ITC4",
                           region=="MARCHE" ~"ITI3",
@@ -1804,7 +1804,7 @@ netherlands_esf<- netherlands_esf %>%
                           is.na(nuts_2) & location_indicator=="8000GA"~"NL21",
                           is.na(nuts_2) & location_indicator=="8900JA"~"NL12",
                           is.na(nuts_2) & location_indicator=="9700AN"~"NL11",
-                          is.na(nuts_2) & location_indicator=="9701BC"~"N11L",
+                          is.na(nuts_2) & location_indicator=="9701BC"~"N11",
                           TRUE~nuts_2)) %>% 
   select(-react, -NUTS3, -CODE, -postal_code)
 
@@ -1859,7 +1859,9 @@ poland_efrd1 <- poland_efrd1 %>%
                           nuts_2=="NA" & regions=="WOJ.: LUBELSKIE"~"PL81",
                           nuts_2=="NA" & regions=="WOJ.: LUBUSKIE"~"PL43",
                           nuts_2=="NA" & regions=="WOJ.: MAŁOPOLSKIE"~"PL21",
-                          nuts_2=="NA" & regions=="WOJ.: MAZOWIECKIE"~"PL92",
+                          nuts_2=="NA" & regions=="WOJ.: MAZOWIECKIE" & !subregions %in% c(" POW.: Warszawa", " POW.: warszawski zachodni") ~"PL92",
+                          nuts_2=="NA" & regions=="WOJ.: MAZOWIECKIE" & subregions==" POW.: Warszawa" ~"PL91",
+                          nuts_2=="NA" & regions=="WOJ.: MAZOWIECKIE" & subregions==" POW.: warszawski zachodni" ~"PL91",
                           nuts_2=="NA" & regions=="WOJ.: OPOLSKIE"~"PL52",
                           nuts_2=="NA" & regions=="WOJ.: PODKARPACKIE"~"PL82",
                           nuts_2=="NA" & regions=="WOJ.: PODLASKIE"~"PL84",
@@ -1869,7 +1871,6 @@ poland_efrd1 <- poland_efrd1 %>%
                           nuts_2=="NA" & regions=="WOJ.: WARMIŃSKO-MAZURSKIE"~"PL62",
                           nuts_2=="NA" & regions=="WOJ.: WIELKOPOLSKIE"~"PL41",
                           nuts_2=="NA" & regions=="WOJ.: ZACHODNIOPOMORSKIE"~"PL42",
-                          nuts_2=="NA" & regions=="WOJ.: WARSZAWSKI"~"PL92",
                           TRUE~nuts_2)) %>% 
   select(-programme, -thematic_ojc, -regions, -subregions)
 
@@ -2196,6 +2197,8 @@ funds <- funds %>%
   
 #Spain####
 spain_esf <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/spain/esf/spain_listado_esf_op_poefe.xlsx", skip=3)
+spain_efrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/spain/efrd/LO-spain.xlsx", skip=4)
+
 
 spain_esf <- spain_esf %>% 
   select(-`CODIGO \r\nOPERACIÓN`, -`PAÍS`)
@@ -2339,13 +2342,21 @@ write_csv(funds, file.path("./data/processed/","REACT-EU-funds.csv"))
 #4. step: Based on unified df: one observation per NUTS-II-level in each MS with EU booked expenditure across funds (and possibly total amount/EU cofinancing rate).#### 
 
 funds_aggregated <- funds %>% 
-  group_by(nuts_2, country_name, country_id, number_of_projects) %>% 
+  mutate(number_of_projects=case_when(is.na(number_of_projects) ~0,
+                                      TRUE~number_of_projects)) %>% 
+  group_by(nuts_2, country_name, country_id) %>% 
   summarize(sum_EU_means=sum(total_EU_expenditure),
             mean_cofinancing_rate=mean(eu_cofinancing_rate),
-            frequency1=n())
+            frequency1=n(),
+            number_of_projects=sum(number_of_projects))
 
 funds_aggregated <- funds_aggregated %>% 
-  mutate(number_of_projects=as.integer(number_of_projects)) %>% 
-  mutate(number_of_projects=case_when(is.na(number_of_projects)~frequency1,
-                                      TRUE~number_of_projects)) %>% 
-  select(-frequency1)
+  mutate(frequency1=as.integer(frequency1),
+         combined=number_of_projects+frequency1-1,
+         combined=as.integer(combined)) %>% 
+  mutate(number_of_projects=case_when(country_name=="portugal" ~ combined,
+                                      TRUE~frequency1)) %>% 
+  select(-frequency1, -combined)
+
+write_csv(funds_aggregated, file.path("./data/processed/","REACT-EU-funds_aggregated.csv"))
+
