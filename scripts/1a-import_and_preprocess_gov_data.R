@@ -285,7 +285,8 @@ cabinet_nat_and_reg_20 <- cabinet_nat_and_reg %>%
   select(-included_2020, -included_2021)
 
 cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_20 %>%
-  bind_rows(cabinet_nat_and_reg_21)
+  bind_rows(cabinet_nat_and_reg_21) %>% 
+  select(-incumbency_period_regional, -incumbency_period_national)
 
 #Add political_region_nuts_level for all observations, to prepare the link with other data sets.
 cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_2021 %>% 
