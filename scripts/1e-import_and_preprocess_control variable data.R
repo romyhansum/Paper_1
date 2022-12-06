@@ -1,51 +1,102 @@
 #Import and preprocess data on socioeconomic and political factors.
 
-#1. Population statistics ####
-
 library(tidyverse)
 library(readxl)
 
-population1 <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_population_02122022.xlsx", sheet="Sheet 1", skip=10)
-
-colnames(population1) <- c("nuts", "region", "population")
-
-population <- population1 %>% 
-  filter(str_detect(nuts, "\\w{2}[:alnum:]{2}")) %>% 
-  filter(nuts!="DE_TOT") %>% 
-  filter(nuts!="EU27_2020") %>% 
-  filter(nuts!="Special value") %>% 
-  filter(region!="Not regionalised/Unknown level 2") %>% 
-  filter(region!="Not regionalised/Unknown NUTS 2") %>% 
-  filter(region!="Not regionalised/Unknown NUTS 2") %>% 
-  filter(!is.na(region)) %>% 
-  filter(region!="not available") %>% 
-  filter(!str_detect(nuts, "FR[1,B,C, D, E, F, G, H, I, J, K, L, M]\\d")) %>% 
-  filter(!str_detect(nuts, "UK.+")) %>% 
-  filter(!str_detect(nuts, "MK.+")) %>%
-  filter(!str_detect(nuts, "AL.+")) %>%
-  filter(!str_detect(nuts, "RS.+")) %>%
-  filter(!str_detect(nuts, "TR.+")) %>%
-  filter(!str_detect(nuts, "NO.+")) %>%
-  filter(!str_detect(nuts, "CH.+")) %>%
-  filter(!str_detect(nuts, "ME.+")) %>%
-  filter(!str_detect(nuts, "LI.+")) %>%
-  filter(!str_detect(nuts, "IS.+")) %>%
-  filter(nuts!="HR04") %>% #old NUTS2016 code.
-  filter(nuts!="EFTA") %>%
-  mutate(population=as.integer(population)) 
-
-
-population2 <- population1 %>% 
-  filter(str_detect(nuts, "\\w{2}[:alnum:]{2}")) %>% 
-    filter(str_detect(nuts, "\\FR[1,B,C, D, E, F, G, H, I, J, K, L, M]\\d")) %>% 
-  mutate(nuts=str_extract(nuts, "\\w{2}[:alnum:]{1}")) %>% 
-  mutate(population=as.integer(population)) %>% 
-  group_by(nuts) %>% 
-  summarise(population=sum(population))
+#1. Population statistics ####
+population <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_population_06122022.csv")
 
 population <- population %>% 
-  bind_rows(population2)
+  filter(geo!="FRXX") %>% 
+  filter(geo!="HUXX") %>% 
+  select(geo, OBS_VALUE, TIME_PERIOD) %>% 
+  rename(nuts=geo,
+         reference_year=TIME_PERIOD) %>% 
+  mutate(population=unlist(OBS_VALUE)) %>% 
+  select(-OBS_VALUE)
+
+hr02 <- c("HR02", "2020", 1060209) #Croatian 2020 observations in NUTS-2021 units are added manually.
+hr05 <- c("HR05", "2020", 809235)
+hr06 <- c("HR06", "2020", 814919)
+
+population <- population %>% 
+  rbind(hr02) %>% 
+  rbind(hr05) %>% 
+  rbind(hr06) %>% 
+  filter(nuts!="HR04")
 
 write_csv(population, file.path("./data/processed/population.csv"))
 
-#2. unemployment statistics ####
+#2. Unemployment statistics ####
+#ggf. checken, ob bislang fehlende und manuell ergänzte Werte nun in Eurostat verfügbar sind.
+#Falls ja, auch in Codebook und Data Dictionary anpassen.
+ue <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_ue_06122022.csv")
+
+ue <- ue %>% 
+  select(geo, OBS_VALUE, TIME_PERIOD) %>% 
+  rename(nuts=geo,
+         reference_year=TIME_PERIOD) %>% 
+  mutate(ue_rate=unlist(OBS_VALUE)) %>% 
+  select(-OBS_VALUE)
+
+hr02 <- c("HR02", "2020", 13.6) #Croatian 2020 observations in NUTS-2021 version units are added manually.
+hr05 <- c("HR05", "2020", 5.2)
+hr06 <- c("HR06", "2020", 5)
+
+fi201 <- c("FI20", "2020", 9.5) #Åland observations are added manually.
+fi202 <- c("FI20", "2021", 6.3)
+
+pl43201 <- c("PL43", "2020", 6.6) #Lubuskie observations are added manually.
+pl43202 <- c("PL43", "2021", 5.1)
+
+deb201 <- c("DEB2", "2020", 3.5) #Some German observations are added manually.
+deb202 <- c("DEB2", "2021", 3.8)
+ded402 <- c("DED4", "2020", 5.4)
+dec002 <- c("DEC0", "2020", 7.2)
+deb102 <- c("DEB1", "2020", 4.7)
+de7302 <- c("DE73", "2020", 4.8)
+de5002 <- c("DE50", "2020", 11.2)
+de2602 <- c("DE26", "2020", 3.4)
+de2402 <- c("DE24", "2020", 3.9)
+de2302 <- c("DE23", "2020", 3.3)
+de2202 <- c("DE22", "2020", 3.6)
+
+fry5 <- c("FRY5", "2021", 30) #Mayotte observation is added manually
+
+ue <- ue %>% 
+  rbind(hr02) %>% 
+  rbind(hr05) %>% 
+  rbind(hr06) %>% 
+  filter(nuts!="HR04") %>% 
+  filter(nuts!="FI20") %>% 
+  filter(nuts!="PL43") %>% 
+  filter(nuts!="DEB2") %>% 
+  filter(!(nuts=="DED4" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DEC0" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DEB1" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE73" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE50" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE26" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE24" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE23" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DE22" & reference_year=="2020")) %>% 
+  rbind(fi201) %>% 
+  rbind(fi202) %>% 
+  rbind(pl43201) %>% 
+  rbind(pl43202) %>% 
+  rbind(dec002) %>% 
+  rbind(deb201) %>% 
+  rbind(deb202) %>% 
+  rbind(ded402) %>% 
+  rbind(deb102) %>% 
+  rbind(de7302) %>% 
+  rbind(de5002) %>% 
+  rbind(de2602) %>% 
+  rbind(de2402) %>% 
+  rbind(de2302) %>% 
+  rbind(de2202) %>% 
+  rbind(fry5)
+
+#3. GDP per capita ####
+
+write_csv(ue, file.path("./data/processed/ue.csv"))

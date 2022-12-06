@@ -133,21 +133,29 @@ write_csv(gov_vote_op_funds, file.path("./data/processed/gov_vote_budget_funds.c
 # 4. Link socioeconomic data to gov-vote-budgetfunds-data####
 gov_vote_budget_funds  <- read_csv("./data/processed/gov_vote_budget_funds.csv")
 population  <- read_csv("./data/processed/population.csv")
+ue <- read_csv("./data/processed/ue.csv")
 
 population <- population %>% 
-  select(-region) %>% 
   filter(nuts!="SI04") %>% #treated as one NUTS-region in the EU-NED data set.
-  mutate(population=case_when(nuts=="SI03"~1003931+1105046,
-         TRUE~population),
-         nuts=case_when(nuts=="SI03"~"SI00",
-                        TRUE~nuts))
+  filter(nuts!="SI03") %>% 
+  mutate(nuts=case_when(nuts=="SI0"~"SI00",
+                        TRUE~nuts),
+         reference_year=as.integer(reference_year))
 
 gov_vote_budget_funds <- gov_vote_budget_funds %>% 
-  full_join(population, by="nuts") %>% 
-  mutate(funds_pc=react_funds/population)
+  full_join(population, c("nuts", "reference_year")) %>% 
+  mutate(react_funds_pc=react_funds/population)
 
-write_csv(gov_vote_budget_funds, file.path("./data/processed/gov_vote_budget_funds.csv"))
+ue <- ue %>% 
+  filter(nuts!="SI04") %>% #treated as one NUTS-region in the EU-NED data set.
+  filter(nuts!="SI03") %>% 
+  mutate(nuts=case_when(nuts=="SI0"~"SI00",
+                        TRUE~nuts),
+reference_year=as.integer(reference_year))
 
+gov_vote_budget_funds <- gov_vote_budget_funds %>% 
+  left_join(ue, by=c("nuts", "reference_year")) 
 
 #5. Link political data to gov-vote-budgetfunds-data
 rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)
+write_csv(gov_vote_budget_funds, file.path("./data/processed/gov_vote_budget_funds.csv"))
