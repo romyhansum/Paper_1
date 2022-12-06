@@ -39,11 +39,16 @@ ue <- ue %>%
   mutate(ue_rate=unlist(OBS_VALUE)) %>% 
   select(-OBS_VALUE)
 
-hr02 <- c("HR02", "2020", 13.6) #Croatian 2020 observations in NUTS-2021 version units are added manually.
-hr05 <- c("HR05", "2020", 5.2)
-hr06 <- c("HR06", "2020", 5)
 
-fi201 <- c("FI20", "2020", 9.5) #Åland observations are added manually.
+hr02 <- c("HR02", "2019", 16.1) #Croatian 2019 and 2020 observations in NUTS-2021 version units are added manually.
+hr05 <- c("HR05", "2019", 3.7)
+hr06 <- c("HR06", "2019", 5.8)
+hr021 <- c("HR02", "2020", 13.6) 
+hr051 <- c("HR05", "2020", 5.2)
+hr061 <- c("HR06", "2020", 5)
+
+fi200 <- c("FI20", "2019", 3.5) #Åland observations are added manually.
+fi201 <- c("FI20", "2020", 9.5) 
 fi202 <- c("FI20", "2021", 6.3)
 
 pl43201 <- c("PL43", "2020", 6.6) #Lubuskie observations are added manually.
@@ -67,10 +72,15 @@ ue <- ue %>%
   rbind(hr02) %>% 
   rbind(hr05) %>% 
   rbind(hr06) %>% 
+  rbind(hr021) %>% 
+  rbind(hr051) %>% 
+  rbind(hr061) %>% 
   filter(nuts!="HR04") %>% 
   filter(nuts!="FI20") %>% 
-  filter(nuts!="PL43") %>% 
-  filter(nuts!="DEB2") %>% 
+  filter(!(nuts=="PL43" & reference_year=="2020")) %>% 
+  filter(!(nuts=="PL43" & reference_year=="2021")) %>% 
+  filter(!(nuts=="DEB2" & reference_year=="2020")) %>% 
+  filter(!(nuts=="DEB2" & reference_year=="2021")) %>% 
   filter(!(nuts=="DED4" & reference_year=="2020")) %>% 
   filter(!(nuts=="DEC0" & reference_year=="2020")) %>% 
   filter(!(nuts=="DEB1" & reference_year=="2020")) %>% 
@@ -80,6 +90,7 @@ ue <- ue %>%
   filter(!(nuts=="DE24" & reference_year=="2020")) %>% 
   filter(!(nuts=="DE23" & reference_year=="2020")) %>% 
   filter(!(nuts=="DE22" & reference_year=="2020")) %>% 
+  rbind(fi200) %>% 
   rbind(fi201) %>% 
   rbind(fi202) %>% 
   rbind(pl43201) %>% 
@@ -95,7 +106,15 @@ ue <- ue %>%
   rbind(de2402) %>% 
   rbind(de2302) %>% 
   rbind(de2202) %>% 
-  rbind(fry5)
+  rbind(fry5) 
+
+ue <- ue %>% 
+  pivot_wider(names_from=reference_year, values_from = ue_rate) %>% 
+  mutate(ue_change_1920=as.double(`2020`)-as.double(`2019`)) %>% 
+  pivot_longer(cols=c(`2019`, `2020`, `2021`), names_to = "reference_year", values_to="ue_rate") %>% 
+  filter(reference_year!="2019") %>% 
+  mutate(ue_change_1920=case_when(reference_year=="2021"~99,
+                                  TRUE~ue_change_1920))
 
 #3. GDP per capita ####
 
