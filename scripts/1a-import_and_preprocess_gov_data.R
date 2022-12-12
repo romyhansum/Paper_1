@@ -321,6 +321,18 @@ cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_2021 %>%
                                          region=="national" & country_name=="sweden"~"SE",
                                          TRUE~political_region_nuts))
 
+# Add eu_anti_pro variable.
+
+lr <- read_csv("./data/raw/view_party.csv")
+
+lr <- lr%>%
+  filter(!(country_name=="Australia" | country_name=="Canada" | country_name=="Iceland" | country_name=="Switzerland" | country_name=="United Kingdom" | country_name=="Japan" | country_name=="Norway" | country_name=="New Zealand" | country_name=="Turkey" | country_name=="Israel")) %>% 
+  select(country_name_short, party_id, eu_anti_pro)
+
+cabinet_nat_and_reg_2021 <- cabinet_nat_and_reg_2021 %>% 
+  left_join(lr, by=c("prime_min_party_national"="party_id", "country_name_short")) %>% 
+  rename(eu_anti_pro_prime_min_national=eu_anti_pro)
+
 #Alignment between national and regional governments, where applicable.
 #Alignment1: Lower-level gvt. leader belongs to party in upper level gvt. coalition.
 #Alignment2: Lower-level gvt. leader belongs to party of upper-level gvt. leader.
