@@ -89,10 +89,35 @@ population <- population %>%
 
 write_csv(population, file.path("./data/processed/population.csv"))
 
+population_pooled <- population %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI.+") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts)) %>% 
+  group_by(political_region_nuts, reference_year) %>% 
+  summarise(population_political_region=sum(population),
+            area_political_region=sum(area),
+            capital_political_region=sum(capital_region)) %>% 
+  mutate(pop_density_political_region=population_political_region/area_political_region,
+         reference_year=as.integer(reference_year)) %>% 
+  ungroup()
+
+write_csv(population_pooled, file.path("./data/processed/population_pooled.csv"))
+
 #2. Unemployment statistics ####
 #ggf. checken, ob bislang fehlende und manuell ergänzte Werte nun in Eurostat verfügbar sind.
 #Falls ja, auch in Codebook und Data Dictionary anpassen.
 ue <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_ue_06122022.csv")
+ue_pooled <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_ue_pooled_06122022.csv")
 
 ue <- ue %>% 
   select(geo, OBS_VALUE, TIME_PERIOD) %>% 
@@ -130,7 +155,7 @@ de2202 <- c("DE22", "2020", 3.6)
 
 fry5 <- c("FRY5", "2021", 30) #Mayotte observation is added manually
 
-ue <- ue %>% 
+ue1 <- ue %>% 
   rbind(hr02) %>% 
   rbind(hr05) %>% 
   rbind(hr06) %>% 
@@ -170,20 +195,74 @@ ue <- ue %>%
   rbind(de2202) %>% 
   rbind(fry5) 
 
-ue <- ue %>% 
+ue <- ue1 %>% 
   pivot_wider(names_from=reference_year, values_from = ue_rate) %>% 
   mutate(ue_change_1920=as.double(`2020`)-as.double(`2019`)) %>% 
   pivot_longer(cols=c(`2019`, `2020`, `2021`), names_to = "reference_year", values_to="ue_rate") %>% 
   filter(reference_year!="2019") %>% 
   mutate(ue_change_1920=case_when(reference_year=="2021"~99,
                                   TRUE~ue_change_1920))
+
 write_csv(ue, file.path("./data/processed/ue.csv"))
+
+
+ue1 <- ue1 %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI.+") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts)) %>% 
+  mutate(reference_year=as.numeric(reference_year))
+
+
+ue_pooled <- ue_pooled %>% 
+  select(geo, OBS_VALUE, TIME_PERIOD) %>% 
+  rename(political_region_nuts=geo,
+         reference_year=TIME_PERIOD) %>% 
+  mutate(ue_rate_political_region=unlist(OBS_VALUE)) %>% 
+  select(-OBS_VALUE)
+
+ue_pooled <- ue1 %>% 
+  left_join(ue_pooled, by=c("reference_year", "political_region_nuts")) %>% 
+  mutate(ue_rate=as.numeric(ue_rate)) %>% 
+  mutate(ue_rate_political_region=case_when(nuts=="ITH1" & reference_year=="2019" ~4,
+                                            nuts=="ITH2" & reference_year=="2019" ~4,                                          
+                                            nuts=="ITH1" & reference_year=="2020" ~4.6,
+                                            nuts=="ITH2" & reference_year=="2020" ~4.6,
+                                            nuts=="ITH1" & reference_year=="2021" ~4.3,
+                                            nuts=="ITH2" & reference_year=="2021" ~4.3,
+                                            TRUE~ue_rate_political_region)) %>% 
+  mutate(ue_rate_political_region=case_when(is.na(ue_rate_political_region)~ue_rate,
+                                            TRUE~ue_rate_political_region)) %>% 
+  select(-ue_rate)
+
+ue_pooled <- ue_pooled %>% 
+  pivot_wider(names_from=reference_year, values_from = ue_rate_political_region) %>% 
+  mutate(ue_change_1920_political_region=as.double(`2020`)-as.double(`2019`)) %>% 
+  pivot_longer(cols=c(`2019`, `2020`, `2021`), names_to = "reference_year", values_to= "ue_rate_political_region") %>% 
+  filter(reference_year!="2019") %>% 
+  mutate(ue_change_1920_political_region=case_when(reference_year=="2021"~99,
+                                  TRUE~ue_change_1920_political_region)) %>% 
+  select(-nuts) %>% 
+  filter(!duplicated(political_region_nuts, reference_year))
+
+
+write_csv(ue_pooled, file.path("./data/processed/ue_pooled.csv"))
 
 #3. GDP per capita and GVA change ####
 #checken ob bei GVA noch 2020 bei Ungarn und Polen vervollständigt wurde.
 gdppc <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_gdppercapita_06122022.csv")
 gvagrowth <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_GVAgrowth_07122022.csv")
 gdp <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_gdp_07122022.csv")
+gdppc_pooled <- read_csv("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/other var/eurostat_gdppercapita_pooled_06122022.csv")
 
 
 gdppc <- gdppc %>% 
@@ -225,7 +304,38 @@ gdppc <- gdppc %>%
   rbind(si00) %>% 
   mutate(reference_year=as.numeric(reference_year))
   
+gdppc <- gdppc %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI.+") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts)) 
 
+
+gdppc_pooled <- gdppc_pooled %>% 
+  select(geo, OBS_VALUE, TIME_PERIOD) %>% 
+  rename(political_region_nuts=geo,
+         reference_year=TIME_PERIOD) %>% 
+  mutate(gdppc_political_region=unlist(OBS_VALUE)) %>% 
+  select(-OBS_VALUE) %>% 
+  filter(reference_year=="2020") %>% 
+  select(-reference_year)
+
+gdppc <- gdppc %>% 
+  left_join(gdppc_pooled, by="political_region_nuts") %>% 
+  mutate(gdppc_political_region=case_when(nuts=="ITH1" ~40900,
+                                          nuts=="ITH2" ~40900,
+                                          TRUE ~ gdppc_political_region)) %>% 
+  mutate(gdppc_political_region=case_when(is.na(gdppc_political_region) ~ as.numeric(gdppc),
+                                          TRUE ~ gdppc_political_region))
 
 gvagrowth <- gvagrowth %>% 
   select(geo, OBS_VALUE, TIME_PERIOD) %>% 
@@ -308,52 +418,45 @@ gdp <- gdp %>%
   pivot_longer(cols=c(`2019`, `2020`), 
                names_to = "reference_year", 
                values_to="gdp") %>% 
-  filter(reference_year!="2019") %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI0[3,4]") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts),
+         reference_year=as.numeric(reference_year))
+
+
+gdp_pooled <- gdp %>% 
+  mutate(gdp=as.numeric(gdp)) %>% 
+  group_by(reference_year, political_region_nuts) %>% 
+  summarise(gdd_political_region=sum(gdp)) %>% 
+  pivot_wider(names_from=reference_year, values_from = gdd_political_region) %>% 
+  mutate(gdp_change_1920_political_region=(as.double(`2020`)/as.double(`2019`))-1) %>% 
+  pivot_longer(cols=c(`2019`, `2020`), 
+               names_to = "reference_year", 
+               values_to="gdd_political_region") %>% 
   mutate(reference_year=as.numeric(reference_year))
+  
+gdp <- gdp %>% 
+  left_join(gdp_pooled, by=c("political_region_nuts", "reference_year")) %>% 
+  filter(reference_year!="2019") %>% 
+  mutate(political_region_nuts=case_when(political_region_nuts=="SI00"~"SI",
+                                         TRUE~political_region_nuts))
+
 
 gdppc <- gdppc %>% 
   left_join(gvagrowth) %>% 
-  left_join(gdp)
+  left_join(gdp, by=c("nuts", "political_region_nuts"))
 
 write_csv(gdppc, file.path("./data/processed/gdppc.csv"))
-
-gdp_national <- read_csv("C:/Users/RomyH/Downloads/tec00115__custom_4085930_linear.csv")
-
-gdp_national <- gdp_national %>% 
-  select(geo, OBS_VALUE, TIME_PERIOD) %>% 
-  rename(country=geo,
-         reference_year=TIME_PERIOD) %>% 
-  mutate(gdp_growth=unlist(OBS_VALUE)) %>% 
-  select(-OBS_VALUE) %>% 
-  filter(reference_year!="2019")
-
-
-gdp1 <- gdp %>% 
-  mutate(gdp=as.integer(gdp)) %>% 
-  mutate(country=str_extract(nuts, "\\w{2}")) %>% 
-  group_by(country, reference_year) %>%
-  summarise(gdpsum=sum(gdp)) %>% 
-  pivot_wider(names_from=reference_year, values_from = gdpsum) %>% 
-  mutate(gdp_growth_pooled=(as.double(`2020`)/as.double(`2019`))-1) %>% 
-  pivot_longer(cols=c(`2019`, `2020`), 
-               names_to = "reference_year", 
-               values_to="gdp") %>% 
-  filter(reference_year!="2019") %>% 
-  mutate(reference_year=as.numeric(reference_year)) %>% 
-  left_join(gdp_national, by=c("country", "reference_year")) %>% 
-  mutate(gdp_growth_pooled=gdp_growth_pooled*100,
-         gdp_growth_difference=gdp_growth-gdp_growth_pooled) %>% 
-  filter(country!="FR") %>% 
-  filter(country!="SI") %>% 
-  filter(!duplicated(country))
-
-gdp1 %>% 
-  ggplot(aes(x = gdp_growth_pooled, y=gdp_growth)) +
-  geom_point() +
-  geom_abline(xintercept = 0, slope=1, linetype="dashed") +
-  labs(title="Comparison pooled and national Eurostat data") +
-  scale_y_continuous(labels = function(x) paste0(x, '%')) +
-  scale_x_continuous(labels = function(x) paste0(x, '%'))
 
 #4. COVID-19 related statistics #### 
 
@@ -408,14 +511,14 @@ covid_aggregate <- covid %>%
 covid_national <- covid_national %>% 
   filter(country=="Netherlands") %>% 
   filter(indicator=="cases") %>% 
-  filter(year_week=="2020-53" | year_week=="2021-52")
+  filter(year_week=="2020-53")
   
 covid_NL <- covid_aggregate %>%  #For Netherlands there is no information for 2020 in the data. To reflect differences between regions values from 2021 are imputed for 2020 and then to reflect the overall values, they are adapted to 2020/2021 nationwide cases ratio.
   filter(country=="Netherlands") %>% 
   mutate(reference_year=2020,
          cases_total=cases_total*0.259)
 
-covid_aggregate <- covid_aggregate %>% 
+covid_aggregate1 <- covid_aggregate %>% 
   bind_rows(covid_NL) %>% 
   select(-year)
 
@@ -471,7 +574,7 @@ covid_NL_pop <- covid_pop %>%
 covid_pop <- covid_pop %>% 
   bind_rows(covid_NL_pop)
 
-covid_cases <- covid_aggregate %>% 
+covid_cases <- covid_aggregate1 %>% 
   full_join(covid_pop, by=c("nuts", "reference_year", "country")) %>% 
   mutate(rate_per_100k=cases_total/(population/100000)) 
 
@@ -496,20 +599,20 @@ covid_cases_DE2 <- covid_cases_DE1 %>%
                         nuts=="DEB2"~"DEB3",
                         nuts=="DED4"~"DED5"))
 covid_cases_DE3 <- covid_cases_DE1 %>% 
-  filter(!nuts%in% c("DE30", "DE40", "DE50", "DE60", "DE80", "DEC0", "DEE0", "DEF0", "DEG0", "DE71", "B1", "D2")) %>% 
+  filter(!nuts%in% c("DE30", "DE40", "DE50", "DE60", "DE80", "DEC0", "DEE0", "DEF0", "DEG0", "DE72", "DEB2", "DED4")) %>% 
   mutate(nuts=case_when(nuts=="DE12"~"DE14",
                         nuts=="DE22"~"DE24",
                         nuts=="DE92"~"DE94",
                         nuts=="DEA2"~"DEA4"))
 covid_cases_DE4 <- covid_cases_DE1 %>% 
-  filter(!nuts%in% c("DE11", "DE30", "DE40", "DE50", "DE60", "DE80", "DE91", "DEC0", "DEE0", "DEF0", "DEG0", "DE71", "B1", "D2")) %>% 
+  filter(!nuts%in% c("DE12", "DE30", "DE40", "DE50", "DE60", "DE80", "DE92", "DEC0", "DEE0", "DEF0", "DEG0", "DE72", "DEB2", "DED4")) %>% 
   mutate(nuts=case_when(nuts=="DE22"~"DE25",
                         nuts=="DEA2"~"DEA5"))
 covid_cases_DE5 <- covid_cases_DE1 %>% 
-  filter(!nuts%in% c("DE11", "DE30", "DE40", "DE50", "DE60", "DE80", "DE91", "DEC0", "DEE0", "DEF0", "DEG0", "DE71", "DEB1", "DED2", "DEA1")) %>% 
+  filter(!nuts%in% c("DE12", "DE30", "DE40", "DE50", "DE60", "DE80", "DE92", "DEC0", "DEE0", "DEF0", "DEG0", "DE72", "DEB2", "DED4", "DEA2")) %>% 
   mutate(nuts=case_when(nuts=="DE22"~"DE26"))
 covid_cases_DE6 <- covid_cases_DE1 %>% 
-  filter(!nuts%in% c("DE11", "DE30", "DE40", "DE50", "DE60", "DE80", "DE91", "DEC0", "DEE0", "DEF0", "DEG0", "DE71", "DEB1", "DED2", "DEA1")) %>% 
+  filter(!nuts%in% c("DE12", "DE30", "DE40", "DE50", "DE60", "DE80", "DE92", "DEC0", "DEE0", "DEF0", "DEG0", "DE72", "DEB2", "DED4", "DEA2")) %>% 
   mutate(nuts=case_when(nuts=="DE22"~"DE27"))
 
 covid_cases <- covid_cases %>% 
@@ -565,7 +668,50 @@ covid_cases_PT6 <- covid_cases %>%
 
 covid_cases <- covid_cases %>% 
   bind_rows(covid_cases_PT1, covid_cases_PT2, covid_cases_PT3, covid_cases_PT4, covid_cases_PT5, covid_cases_PT6) %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI.+") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts))
+
+
+
+covid_pooled <- covid_aggregate %>% 
+  bind_rows(covid_NL) %>% 
+  full_join(covid_pop, by=c("nuts", "reference_year", "country")) %>% 
+  mutate(political_region_nuts=case_when((str_detect(nuts, "DE.+")| str_detect(nuts, "BE.+"))~ str_extract(nuts, "\\w{2}[:alnum:]{1}"),
+                                         (str_detect(nuts, "BG.+")| str_detect(nuts, "CY.+") | str_detect(nuts, "CZ.+") |
+                                            str_detect(nuts, "EE.+") | str_detect(nuts, "EL.+") | str_detect(nuts, "FI.+") |
+                                            str_detect(nuts, "HR.+") | str_detect(nuts, "HU.+") | str_detect(nuts, "IE.+") |
+                                            str_detect(nuts, "LT.+") | str_detect(nuts, "LU.+") | str_detect(nuts, "LV.+") | 
+                                            str_detect(nuts, "MT.+") | str_detect(nuts, "PT.+") | str_detect(nuts, "RO.+") |
+                                            str_detect(nuts, "SE.+") | str_detect(nuts, "SI.+") | str_detect(nuts, "SK.+") |
+                                            str_detect(nuts, "FI.+"))~ str_extract(nuts, "\\w{2}"),
+                                         nuts=="ITH1"~"ITH1/ITH2",
+                                         nuts=="ITH2"~"ITH1/ITH2",
+                                         nuts=="PL91"~"PL9",
+                                         nuts=="PL92"~"PL9",
+                                         TRUE~nuts)) %>% 
+  group_by(reference_year, political_region_nuts) %>% 
+  summarise(pop_sum=sum(population),
+            cases_total_sum=sum(cases_total)) %>% 
+  mutate(rate_per_100k_political_region=cases_total_sum/(pop_sum/100000)) %>% 
+  ungroup() %>% 
+  select(rate_per_100k_political_region, political_region_nuts, reference_year)
+
+covid_cases <- covid_cases %>% 
+  left_join(covid_pooled, by=c("reference_year", "political_region_nuts")) %>% 
   select(-country, -population, -cases_total)
+
+
 
 write_csv(covid_cases, file.path("./data/processed/covid_cases.csv"))
 

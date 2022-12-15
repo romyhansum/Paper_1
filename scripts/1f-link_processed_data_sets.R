@@ -131,9 +131,12 @@ gov_vote_op_funds <- gov_vote_op_budget %>%
 write_csv(gov_vote_op_funds, file.path("./data/processed/gov_vote_budget_funds.csv"))
 
 # 4. Link socioeconomic data to gov-vote-budgetfunds-data####
+##Falls doch nicht nur 2020 socioeconomic variables, dann hier jeweils filter auf reference_year=2020 löschen, und bei left-Join, ref_year ergänzen.
 gov_vote_budget_funds  <- read_csv("./data/processed/gov_vote_budget_funds.csv")
 population  <- read_csv("./data/processed/population.csv")
+population_pooled  <- read_csv("./data/processed/population_pooled.csv")
 ue <- read_csv("./data/processed/ue.csv")
+ue_pooled <- read_csv("./data/processed/ue_pooled.csv")
 gdppc <- read_csv("./data/processed/gdppc.csv")
 covid_cases <- read_csv("./data/processed/covid_cases.csv")
 
@@ -147,23 +150,35 @@ population <- population %>%
 
 gov_vote_budget_funds <- gov_vote_budget_funds %>% 
   full_join(population, c("nuts", "reference_year")) %>% 
-  mutate(react_funds_pc=react_funds/population)
+  full_join(population_pooled, c("political_region_nuts", "reference_year")) %>% 
+  mutate(react_funds_pc=react_funds/population,
+         regional_react_budget_pc=regional_react_budget/population_political_region)
 
 ue <- ue %>% 
   filter(nuts!="SI04") %>% #treated as one NUTS-region in the EU-NED data set.
   filter(nuts!="SI03") %>% 
+  filter(reference_year=="2020") %>% 
   mutate(nuts=case_when(nuts=="SI0"~"SI00",
-                        TRUE~nuts),
-reference_year=as.integer(reference_year))
+                        TRUE~nuts)) %>% 
+  select(-reference_year)
+
+ue_pooled <- ue_pooled %>% 
+  filter(reference_year=="2020") %>% 
+  select(-reference_year)
 
 gdppc <- gdppc %>% 
   filter(nuts!="SI04") %>% #treated as one NUTS-region in the EU-NED data set.
-  filter(nuts!="SI03") 
+  filter(nuts!="SI03")
+
+covid_cases <- covid_cases %>% 
+  filter(reference_year=="2020")%>% 
+  select(-reference_year)
 
 gov_vote_budget_funds <- gov_vote_budget_funds %>% 
-  left_join(ue, by=c("nuts", "reference_year")) %>% 
-  left_join(gdppc, by=c("nuts", "reference_year")) %>% 
-  left_join(covid_cases, by=c("nuts", "reference_year"))
+  left_join(ue, by=c("nuts")) %>% 
+  left_join(ue_pooled, by="political_region_nuts") %>% 
+  left_join(gdppc, by=c("nuts")) %>% 
+  left_join(covid_cases, by=c("nuts"))
 
 
 #5. Link political data to gov-vote-budgetfunds-data####
@@ -181,13 +196,16 @@ gov_vote_budget_funds <- gov_vote_budget_funds %>%
                                     country %in% c("germany", "hungary", "lithuania")  ~ "mixed")) %>% 
   rename(covid_rate_per_100k=rate_per_100k) %>% 
   select(nuts, reference_year, country_code, country, country_id, react_funds, react_funds_pc, eu_cofinancing_rate, number_of_projects, regionalisation, regional_react_budget, 
-         electoral_system, election_date_national, election_id_national,electorate, total_vote, valid_vote, turnout, start_date_national, firstyear_incumbent_national, cabinet_name_national, 
-         cabinet_id_national, previous_cabinet_id_national, caretaker_national, govparty1_national, govparty2_national, govparty3_national, govparty4_national,
+         regional_react_budget_pc, electoral_system, election_date_national, election_id_national,electorate, total_vote, valid_vote, turnout, start_date_national, firstyear_incumbent_national, 
+         cabinet_name_national, cabinet_id_national, previous_cabinet_id_national, caretaker_national, govparty1_national, govparty2_national, govparty3_national, govparty4_national,
          govparty5_national, govparty6_national, govparty7_national, prime_min_party_national, gov_votes, pm_votes, gov_voteshare, pm_voteshare,party_prime_min_english_national, 
          party_prime_min_short_national,left_right_prime_min_national, eu_anti_pro_prime_min_national, election_date_regional, firstyear_incumbent_regional, political_region_nuts_level, 
          political_region_nuts, political_region, caretaker_regional, govparty1_regional, govparty2_regional, govparty3_regional, govparty4_regional, govparty5_regional,
          govparty6_regional, govparty7_regional, prime_min_party_regional, party_prime_min_short_regional, alignment1, alignment2, alignment3, population, area,
-         pop_density, capital_region, ue_rate, ue_change_1920, gdp, gdppc, gdp_change_1920, covid_rate_per_100k, eqi_score_national, rai)
+         pop_density, capital_region, population_political_region, area_political_region, pop_density_political_region, capital_political_region, ue_rate, ue_change_1920, 
+         ue_rate_political_region, ue_change_1920_political_region, gdppc, gdp_change_1920, gdppc_political_region, gdp_change_1920_political_region, covid_rate_per_100k, 
+         rate_per_100k_political_region, eqi_score_national, rai)
 
 rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)
+
 write_csv(gov_vote_budget_funds, file.path("./data/processed/gov_vote_budget_funds.csv"))
