@@ -81,10 +81,21 @@ vote_nuts2_all <- vote_nuts2_all %>%
 
 partyfacts <- read_csv("./data/raw/partyfacts-external-parties.csv")
 
+partyfacts <- as.tibble(partyfacts)
+
 partyfacts <- partyfacts %>% 
   filter(dataset_key=="parlgov") %>% 
-  select(dataset_party_id, partyfacts_id)
+  select(dataset_party_id, partyfacts_id) %>% 
+  mutate(dataset_party_id=case_when(partyfacts_id==2536 ~"2400",  #partyfacts code is occupied with two dataset ids. Only the one relevant for the observed period is kept.
+                                    partyfacts_id==851 ~"910",
+                                    partyfacts_id==859 ~"2659",
+                                    partyfacts_id==2056 ~"2212",
+                                    partyfacts_id==2524 ~"2771",
+                                    TRUE~dataset_party_id)) %>% 
+  filter(!duplicated(dataset_party_id, partyfacts_id))
 
+  
+  
 vote_nuts2_all <- vote_nuts2_all %>% 
   left_join(partyfacts, by="partyfacts_id") %>% 
   rename(party_id=dataset_party_id) %>% 

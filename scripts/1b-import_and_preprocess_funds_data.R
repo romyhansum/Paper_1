@@ -1681,7 +1681,7 @@ lithuania_efrd <- lithuania_efrd %>%
 
 #Netherlands####
 ##überprüfen, ob noch NA bei nuts_2 bestehen - dann ggf. händisch ergänzen (bei ESF sind die PLZ häufig Postbox-Nummern und daher nicht bei PLZ-Liste enthalten.)
-
+##NL EFRD nicht national verwaltet sondern von Zusammenschlüssen von Provinzen.Wird daher nicht inkludiert.
 netherlands_esf <- as_tibble(fread("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/nl_2022-03-05_ESF.csv", skip=4))
 netherlands_efrd <- read_excel("C:/Users/RomyH/OneDrive - Hertie School/PhD/PhD project/data/List of projects/nl_2022-10-27_EFRD.xlsx", skip=1)
 
@@ -1745,8 +1745,7 @@ mean_cofinancing_rate <- netherlands_efrd %>%
   filter(!is.na(eu_cofinancing_rate)) %>% 
   summarise(mean_cofi=mean(eu_cofinancing_rate))
 
-funds <- funds %>% 
-  bind_rows(netherlands_efrd)
+
 
 netherlands_esf <- netherlands_esf %>% 
   select(-fieldcodes, -prog, -cat_inv_prio, -V5, -oper_id, -oper_seq, -"is_sub-oper_of", -"oper_major_proj\n_id\n", -oper_type, -oper_loc_geo, -oper_loc_country, -cat_them_obj, -fin_cost_total_elig, -fin_fund,  
@@ -2157,6 +2156,7 @@ slovakia_esfefrd <- slovakia_esfefrd %>%
                           is.na(nuts_2) & location_indicator==93005 ~"SK02",
                           str_detect(beneficiary, "Ministerstvo")~"higher NUTS",
                           beneficiary=="Štátny fond rozvoja bývania"~"higher NUTS",
+                          beneficiary=="Inštitút pre výskum práce a rodiny"~"higher NUTS",
                           TRUE~nuts_2)) %>% 
   mutate(location_indicator=as.character(location_indicator)) %>% 
   select(-total)

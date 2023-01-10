@@ -24,9 +24,6 @@ gov_and_op_budget <- gov_and_op_budget %>%
          country_name_short=case_when(country_name=="france" & is.na(country_name_short)~"FRA",
                                       country_name=="netherlands" & is.na(country_name_short)~"NLD",
                                       TRUE~country_name_short)) %>% 
-  mutate(total_EU_expenditure = case_when(regionalisation=="no" ~ 0,
-                                          regionalisation=="not applicable" ~ 0,
-                                          TRUE~ total_EU_expenditure)) %>% 
   select(-election_id_regional, -start_date_regional, -cabinet_name_regional, -cabinet_id_regional, -previous_cabinet_id_regional, -party_prime_min_english_regional, -left_right_prime_min_regional)
 
 write_csv(gov_and_op_budget, file.path("./data/processed/gov_and_op_budget.csv"))
@@ -96,6 +93,25 @@ gov_vote_op_budget2 <- gov_vote_op_budget %>%
   group_by(nuts2, reference_year) %>% 
   summarise(pm_votes=sum(party_vote))
 
+gov_vote_op_budget3 <- gov_vote_op_budget %>% 
+  group_by(nuts2, reference_year) %>% 
+  arrange(desc(party_vote)) %>% 
+  summarise(counter=row_number(),
+            party_vote=party_vote) %>% 
+  filter(counter==1 | counter==2) %>% 
+  pivot_wider(names_from = counter, values_from = party_vote) %>% 
+  mutate(diff_vote=`1`-`2`) %>% 
+  filter(nuts2!="FI20") %>% 
+  select(-`1`, -`2`) %>% 
+  ungroup()
+
+gov_vote_op_budget3_aland <- gov_vote_op_budget %>% 
+  filter(nuts2=="FI20") %>% 
+  mutate(diff_vote1=10562)
+
+gov_vote_op_budget_aland <- gov_vote_op_budget_aland %>% 
+  left_join(gov_vote_op_budget3_aland)
+  
 gov_vote_op_budget <- gov_vote_op_budget1 %>% 
   left_join(gov_vote_op_budget2, by=c("nuts2", "reference_year")) %>% 
   bind_rows(gov_vote_op_budget_aland) %>% 
@@ -104,11 +120,20 @@ gov_vote_op_budget <- gov_vote_op_budget1 %>%
   mutate(gov_voteshare=case_when(is.na(gov_voteshare)~0,
                                  TRUE~gov_voteshare),
          pm_voteshare=case_when(is.na(pm_voteshare)~0,
-                                TRUE~pm_voteshare))
+                                TRUE~pm_voteshare)) %>% 
+  left_join(gov_vote_op_budget3, by=c("nuts2", "reference_year")) %>% 
+  ungroup() %>% 
+  mutate(diff_vote=case_when(nuts2=="FI20" ~ as.numeric(diff_vote1),
+                             TRUE~as.numeric(diff_vote)),
+    diff_voteshare=diff_vote/valid_vote) %>% 
+  select(-diff_vote1)
+  
 
 write_csv(gov_vote_op_budget, file.path("./data/processed/gov_vote_op_budget.csv"))
 
 # 3. Link funds data to gov data.####
+#Some national budgets are added manually (source: gov_and_op_budget df) and need to be updated with new financial implementation data.
+
 funds_aggregated  <- read_csv("./data/processed/REACT-EU-funds_aggregated.csv")
 gov_vote_op_budget  <- read_csv("./data/processed/gov_vote_op_budget.csv")
 
@@ -122,11 +147,29 @@ gov_vote_op_funds <- gov_vote_op_budget %>%
   left_join(funds_aggregated, by=c("nuts2", "country", "country_id")) %>% 
   select(-total_expenditure_selected, -total_expenditure_spent, -total_expenditure, -total_national_expenditure, -eu_cofinancing_rate) %>% 
   rename(nuts=nuts2) %>%
-  rename(regional_react_budget=total_EU_expenditure,
-         react_funds=sum_EU_means,
+  rename(react_funds=sum_EU_means,
          eu_cofinancing_rate=mean_cofinancing_rate) %>% 
   mutate(number_of_projects=case_when(is.na(number_of_projects) ~ 0,
-                                      TRUE ~ number_of_projects))
+                                      TRUE ~ number_of_projects),
+         react_budget=total_EU_expenditure)
+
+gov_vote_op_funds <- gov_vote_op_funds %>% 
+  group_by(country, reference_year) %>% 
+  mutate(react_funds1=case_when(is.na(react_funds)~0,
+                                TRUE~react_funds),
+         funds_summed=sum(react_funds1),
+         share=case_when(country=="italy"~funds_summed/11453984576,  #in countries with both regional and national operational programmes, the national budget needs to be taken as denominator.
+                         country=="netherlands"~funds_summed/211598414,
+                         country=="denmark"~funds_summed/207285990,
+                         country=="spain"~funds_summed/2034799295,
+                         country=="france"~funds_summed/610749991,
+                         country=="germany"~funds_summed/223495306,
+                         country=="austria"~funds_summed/246205609,
+                         country=="poland"~funds_summed/1311915979,
+                         TRUE~funds_summed/react_budget),
+         share=case_when(share>1~1, #some countries assigned more funds than they have - however, they should not be weighted more than 1.
+                         TRUE~share)) %>% 
+  select(-react_funds1, -funds_summed)
 
 write_csv(gov_vote_op_funds, file.path("./data/processed/gov_vote_budget_funds.csv"))
 
@@ -152,7 +195,7 @@ gov_vote_budget_funds <- gov_vote_budget_funds %>%
   full_join(population, c("nuts", "reference_year")) %>% 
   full_join(population_pooled, c("political_region_nuts", "reference_year")) %>% 
   mutate(react_funds_pc=react_funds/population,
-         regional_react_budget_pc=regional_react_budget/population_political_region)
+         react_budget_pc=react_budget/population_political_region)
 
 ue <- ue %>% 
   filter(nuts!="SI04") %>% #treated as one NUTS-region in the EU-NED data set.
@@ -181,7 +224,7 @@ gov_vote_budget_funds <- gov_vote_budget_funds %>%
   left_join(covid_cases, by=c("nuts"))
 
 
-#5. Link political data to gov-vote-budgetfunds-data####
+#5. Link political data to gov-vote-budget-funds-data####
 qog_national  <- read_csv("./data/processed/qog_national.csv")
 rai <- read_csv("./data/processed/rai.csv")
 
@@ -195,15 +238,15 @@ gov_vote_budget_funds <- gov_vote_budget_funds %>%
                                     country=="france" ~ "mv",
                                     country %in% c("germany", "hungary", "lithuania")  ~ "mixed")) %>% 
   rename(covid_rate_per_100k=rate_per_100k) %>% 
-  select(nuts, reference_year, country_code, country, country_id, react_funds, react_funds_pc, eu_cofinancing_rate, number_of_projects, regionalisation, regional_react_budget, 
-         regional_react_budget_pc, electoral_system, election_date_national, election_id_national,electorate, total_vote, valid_vote, turnout, start_date_national, firstyear_incumbent_national, 
+  select(nuts, reference_year, country_code, country, country_id, react_funds, react_funds_pc, eu_cofinancing_rate, number_of_projects, regionalisation, react_budget, 
+         react_budget_pc, share, electoral_system, election_date_national, election_id_national,electorate, total_vote, valid_vote, turnout, start_date_national, firstyear_incumbent_national, 
          cabinet_name_national, cabinet_id_national, previous_cabinet_id_national, caretaker_national, govparty1_national, govparty2_national, govparty3_national, govparty4_national,
-         govparty5_national, govparty6_national, govparty7_national, prime_min_party_national, gov_votes, pm_votes, gov_voteshare, pm_voteshare,party_prime_min_english_national, 
+         govparty5_national, govparty6_national, govparty7_national, prime_min_party_national, gov_votes, pm_votes, gov_voteshare, pm_voteshare, diff_voteshare, party_prime_min_english_national, 
          party_prime_min_short_national,left_right_prime_min_national, eu_anti_pro_prime_min_national, election_date_regional, firstyear_incumbent_regional, political_region_nuts_level, 
          political_region_nuts, political_region, caretaker_regional, govparty1_regional, govparty2_regional, govparty3_regional, govparty4_regional, govparty5_regional,
          govparty6_regional, govparty7_regional, prime_min_party_regional, party_prime_min_short_regional, alignment1, alignment2, alignment3, population, area,
          pop_density, capital_region, population_political_region, area_political_region, pop_density_political_region, capital_political_region, ue_rate, ue_change_1920, 
-         ue_rate_political_region, ue_change_1920_political_region, gdppc, gdp_change_1920, gdppc_political_region, gdp_change_1920_political_region, covid_rate_per_100k, 
+         ue_rate_political_region, ue_change_1920_political_region, gdp, gdppc, gdp_change_1920, gdppc_political_region, gdp_change_1920_political_region, covid_rate_per_100k, 
          rate_per_100k_political_region, eqi_score_national, rai)
 
 rstudioapi::writeRStudioPreference("data_viewer_max_columns", 1000L)
